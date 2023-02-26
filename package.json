@@ -1,0 +1,12 @@
+{
+    "name": "bizdom",
+    "packageManager": "yarn@3.3.0",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "version": "0.0.1",
+    "repository": "git@github.com:Chieze-Franklin/bizdom.git",
+    "author": "Franklin Chieze <chieze.franklin@gmail.com>",
+    "license": "MIT"
+}
