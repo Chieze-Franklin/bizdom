@@ -1,6 +1,6 @@
 {
     "name": "@datadom/core",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "A simple library for representing business/data domains and models",
     "main": "build/index.js",
     "types": "build/index.d.ts",
@@ -12,11 +12,11 @@
         "format": "prettier --write \"src/**/*.ts\"",
         "lint": "tslint -p tsconfig.json",
         "test": "jest --config jest.config.js",
-        "postversion" : "git push && git push --tags",
-        "prepare" : "npm run build",
-        "prepublishOnly" : "npm test && npm run lint",
-        "preversion" : "npm run lint",
-        "version" : "npm run format && git add -A src"
+        "postversion": "git push origin $(git symbolic-ref --short HEAD) && git push --tags origin $(git symbolic-ref --short HEAD)",
+        "prepare": "npm run build",
+        "prepublishOnly": "npm test && npm run lint",
+        "preversion": "npm run lint",
+        "version": "npm run format && git add -A src"
     },
     "repository": "git@github.com:Chieze-Franklin/datadom.git",
     "author": "Franklin Chieze <chieze.franklin@gmail.com>",
