@@ -3,9 +3,16 @@ import { DataAccessObject } from '../dao';
 import { Model, ModelDefinition } from '../model';
 
 export class Domain {
-  constructor(private dataAccessObjects: DataAccessObject[] = []) {}
+  constructor() {}
 
+  private _dataAccessObjectMap: Record<string, DataAccessObject> = {};
   private _modelMap: Record<string, Model<ModelDefinition>> = {};
+
+  addDataAccessObject<T extends ModelDefinition>(name: string, dataAccessObject: DataAccessObject): void {
+    // TODO: check that name hasn't been used before
+
+    this._dataAccessObjectMap[name] = dataAccessObject;
+  }
 
   addModel<T extends ModelDefinition>(name: string, model: Model<T>): void {
     // TODO: check that name hasn't been used before
@@ -14,7 +21,9 @@ export class Domain {
     model.name = name;
     this._modelMap[name] = model;
 
-    this.dataAccessObjects.forEach((dao) => dao.addModel(name, new model.definitionType()));
+    Object.keys(this._dataAccessObjectMap).forEach((daoName) =>
+      this._dataAccessObjectMap[daoName].addModel<T>(name, new model.definitionType()),
+    );
   }
 
   // addCheck

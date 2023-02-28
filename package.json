@@ -2,6 +2,10 @@
     "name": "datadom",
     "packageManager": "yarn@3.3.0",
     "private": true,
+    "scripts": {
+        "publish:core": "yarn workspace @datadom/core publish --access public",
+        "publish:dao": "yarn workspace @datadom/dao publish --access public"
+    },
     "workspaces": [
         "packages/*"
     ],
