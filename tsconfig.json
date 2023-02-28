@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "lib": [ "es2015" ],
+        "module": "commonjs",
+        "strict": true,
+        "target": "es5"
+    },
+    "exclude": ["node_modules", "**/node_modules", "**/*.test.ts"]
+}

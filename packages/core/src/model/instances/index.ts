@@ -1,7 +1,7 @@
-import { OperationResult } from "../..";
-import { ModelDefinition } from "../definitions";
+import { OperationResult } from '../..';
+import { ModelDefinition } from '../definitions';
 
 export interface ModelInstance<T extends ModelDefinition> {
-    delete(): Promise<OperationResult>;
-    update(): Promise<OperationResult>;
+  delete(): Promise<OperationResult>;
+  update(): Promise<OperationResult>;
 }
