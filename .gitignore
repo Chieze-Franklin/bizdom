@@ -1,1 +1,8 @@
 node_modules
+**/node_modules
+
+build
+**/build
+
+yarn-error.log
+**/yarn-error.log

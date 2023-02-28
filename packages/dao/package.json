@@ -1,0 +1,21 @@
+{
+    "name": "@datadom/dao",
+    "version": "0.0.1",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": "git@github.com:Chieze-Franklin/datadom.git",
+    "author": "Franklin Chieze <chieze.franklin@gmail.com>",
+    "license": "MIT",
+    "private": false,
+    "dependencies": {
+        "@datadom/core": "0.0.1",
+        "sequelize": "^6.29.0"
+    },
+    "devDependencies": {
+        "typescript": "^4.9.5"
+    }
+}
