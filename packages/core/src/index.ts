@@ -7,13 +7,13 @@ export type ID = string | number;
 export type NullOrUndefined = null | undefined;
 
 export type OperationResult = {
-    ok: boolean;
-    records: number;
-}
+  ok: boolean;
+  records: number;
+};
 
 export const isID = (value: any): value is ID => {
-    if(typeof value === 'string' || typeof value === 'number'){
-      return true
-    }
-    return false
-}
+  if (typeof value === 'string' || typeof value === 'number') {
+    return true;
+  }
+  return false;
+};
