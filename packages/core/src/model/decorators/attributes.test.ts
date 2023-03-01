@@ -28,7 +28,7 @@ describe('@attributes decorator', () => {
 
   test('attributes override those coming below/after them', () => {
     const biteInstance = new BiteDefinition();
-    expect((biteInstance.id as any).attributes).toEqual({ allowNull: true, autoIncrement: true, primaryKey: true })
+    expect((biteInstance.id as any).attributes).toEqual({ allowNull: true, autoIncrement: true, primaryKey: true });
   });
 
   test('fields decorated with attributes have auto-generated "get" and "set" methods', () => {

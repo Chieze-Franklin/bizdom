@@ -18,12 +18,12 @@ export function attribute(attribute: Record<string, any>) {
             get: () => descriptor.value,
             set: (value: any) => {
               descriptor.value = value;
-            }
+            },
           };
         },
         set: (value: any) => {
           descriptor.value = value;
-        }
+        },
       };
     }
     return descriptor;
