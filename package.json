@@ -4,7 +4,9 @@
     "private": true,
     "scripts": {
         "publish:core": "yarn workspace @datadom/core publish --access public",
-        "publish:dao": "yarn workspace @datadom/dao publish --access public"
+        "publish:dao": "yarn workspace @datadom/dao publish --access public",
+        "version:core": "yarn workspace @datadom/core version patch --new-version $VERSION",
+        "version:dao": "yarn workspace @datadom/dao version patch --new-version $VERSION"
     },
     "workspaces": [
         "packages/*"
