@@ -1,10 +1,10 @@
 import { getFieldHash, GlobalContext } from '../../global';
 
-export function attribute(attribute: Record<string, any>) {
+export function attribute(attri: Record<string, any>) {
   return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
     const fieldHash = getFieldHash(target, propertyKey);
 
-    GlobalContext.addFieldAttributes(fieldHash, attribute);
+    GlobalContext.addFieldAttributes(fieldHash, attri);
 
     if (!GlobalContext.fieldHasBeenDiscovered(fieldHash)) {
       GlobalContext.discoverField(fieldHash);

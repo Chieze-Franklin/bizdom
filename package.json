@@ -3,8 +3,11 @@
     "packageManager": "yarn@3.3.0",
     "private": true,
     "scripts": {
+        "git:push": "git push origin $(git symbolic-ref --short HEAD)",
         "publish:core": "yarn workspace @datadom/core publish --access public",
-        "publish:dao": "yarn workspace @datadom/dao publish --access public"
+        "publish:dao": "yarn workspace @datadom/dao publish --access public",
+        "version:core": "yarn workspace @datadom/core version patch --new-version $VERSION",
+        "version:dao": "yarn workspace @datadom/dao version patch --new-version $VERSION"
     },
     "workspaces": [
         "packages/*"
