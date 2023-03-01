@@ -1,1 +1,92 @@
-# datadom
+# @datadom/core
+
+This package contains the core elements of Datadom. These include domains, models, and model definitions.
+
+For more info you can visit the [project wiki](https://github.com/Chieze-Franklin/datadom/wiki).
+
+## Installation
+
+```bash
+npm i @datadom/core
+```
+
+## Domain
+
+This represents the problem space your project occupies and provides a solution to.
+
+```ts
+import { Domain } from '@datadom/core';
+
+const domain = new Domain();
+```
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Domain)
+
+## Models
+
+These represent your business entities. Models are created from model definitions, which are representations of their shapes.
+
+```ts
+import { ID, Domain, Model, ModelDefinition } from '@datadom/core';
+
+class AchievementDefinition implements ModelDefinition {
+  id?: ID;
+  issueDate?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
+}
+
+const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
+
+const domain = new Domain();
+domain.addModel('achievement', achievementModel);
+```
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
+
+## Attributes
+
+Fields in models can be decorated with custom attributes. This is useful for specifying information that may not be derived from TypeScript's type system.
+
+Attributes are applied on fields using the `@attribute` decorator. The decorated field has to be a [getter function](https://www.typescriptlang.org/docs/handbook/2/classes.html#getters--setters).
+
+```ts
+import { attribute, ID, ModelDefinition } from '@datadom/core';
+
+class BiteDefinition implements ModelDefinition {
+  @attribute({ primaryKey: true })
+  @attribute({ allowNull: false, autoIncrement: true })
+  get id(): ID | undefined {
+    return;
+  }
+  type: String = 'survey';
+  @attribute({ max: 3000 })
+  get title(): String | undefined {
+    return;
+  }
+  optional: Boolean = false;
+  published: Boolean = false;
+}
+```
+
+You can add multiple `@attribute` decorators to a field. They will all be merged together, with the top attributes overriding the bottom attributes.
+
+Attributes applied to a field can be gotten during runtime by calling the auto-generated `attributes` field on the decorated field.
+
+```ts
+const biteInstance = new BiteDefinition();
+console.log(biteInstance.id as any).attributes) // { allowNull: false, autoIncrement: true, primaryKey: true }
+```
+
+You may get and set the values of the decorated field using the auto-generated `get` and `set` methods on the field.
+
+```ts
+const biteInstance = new BiteDefinition();
+(biteInstance.id as any).set('12345')
+console.log(biteInstance.id as any).get()) // '12345'
+```
+
+Note that when saving to a data store `biteInstance.id` will be saved as a simple value (in this case it will be saved as `'12345'`).
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Attributes)

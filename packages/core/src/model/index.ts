@@ -69,4 +69,7 @@ export class Model<T extends ModelDefinition> {
 
     return instance as T & ModelInstance<T>;
   }
+
+  // TODO: instantiate(...) used to create instances from data retrieved from the DAOs
+  // so that they have __model__ and can be updated/deleted and have a working .get() on their relationship fields
 }
