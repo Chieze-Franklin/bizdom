@@ -1,9 +1,9 @@
-import { ID } from '..';
+import { ID, ModelNameReuseError, ModelReuseError } from '..';
 import { DataAccessObject } from '../dao';
 import { Model, ModelDefinition } from '../model';
 
 export class Domain {
-  constructor() {}
+  constructor(public name?: string) {}
 
   private _dataAccessObjectMap: Record<string, DataAccessObject> = {};
   private _modelMap: Record<string, Model<ModelDefinition>> = {};
@@ -12,10 +12,18 @@ export class Domain {
     // TODO: check that name hasn't been used before
 
     this._dataAccessObjectMap[name] = dataAccessObject;
+    Object.keys(this._modelMap).forEach((modelName) =>
+      this._dataAccessObjectMap[name].addModel(modelName, new this._modelMap[modelName].definitionType()),
+    );
   }
 
   addModel<T extends ModelDefinition>(name: string, model: Model<T>): void {
-    // TODO: check that name hasn't been used before
+    if (model.domain) {
+      throw new ModelReuseError(model);
+    }
+    if (this._modelMap[name]) {
+      throw new ModelNameReuseError(model);
+    }
 
     model.domain = this;
     model.name = name;

@@ -36,5 +36,8 @@
         "model",
         "data",
         "business"
-    ]
+    ],
+    "dependencies": {
+        "ts-md5": "^1.3.1"
+    }
 }
