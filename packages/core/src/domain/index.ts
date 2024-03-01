@@ -1,8 +1,14 @@
 import { ID, ModelNameReuseError, ModelReuseError } from '..';
 import { DataAccessObject } from '../dao';
 import { Model, ModelDefinition } from '../model';
+import { Repository } from '../repository';
+import { Service } from '../service';
 
-export class Domain {
+interface IDomain {
+  [key: string]: any;
+}
+
+export class Domain implements IDomain {
   constructor(public name?: string) {}
 
   private _dataAccessObjectMap: Record<string, DataAccessObject> = {};
@@ -37,6 +43,10 @@ export class Domain {
   // addCheck
   // addPreHook
   // addPostHook
+
+  addRepository<T extends ModelDefinition>(name: string, repository: Repository<T>): void {
+    (this as IDomain)[name] = new Service<T>(repository);
+  }
 
   async create<T extends ModelDefinition>(definition: T, params: QueryParams, meta?: QueryMeta): Promise<T> {
     // run domain checks

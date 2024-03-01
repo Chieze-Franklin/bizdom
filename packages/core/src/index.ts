@@ -1,7 +1,7 @@
-export * from './dao';
 export * from './domain';
 export * from './errors';
 export * from './model';
+export * from './repository';
 
 export type ID = string | number | bigint | symbol;
 

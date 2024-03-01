@@ -40,4 +40,14 @@ describe('Domain', () => {
     expect(() => domain.addModel('achievement', achievementModel)).toThrow();
     expect(() => domain.addModel('achievement', achievementModel2)).toThrow();
   });
+
+  it('should not add a model with a name that has been used before 2', () => {
+    const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
+    const achievementModel2 = new Model<AchievementDefinition>(AchievementDefinition);
+    const domain = new Domain();
+    domain.addRepository('achievement', achievementModel);
+    domain['achievement'] = achievementModel;
+    expect(() => domain.addModel('achievement', achievementModel)).toThrow();
+    expect(() => domain.addModel('achievement', achievementModel2)).toThrow();
+  });
 });
