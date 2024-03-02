@@ -1,13 +1,11 @@
-import { ModelDefinition } from '..';
-
-export type One<T extends ModelDefinition> =
+export type One<T> =
   | undefined
   | {
       get(): Promise<T | undefined>;
       set(value: T): void;
     };
 
-export type Many<T extends ModelDefinition> =
+export type Many<T> =
   | undefined
   | {
       get(): Promise<T[]>;

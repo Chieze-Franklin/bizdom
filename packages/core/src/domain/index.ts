@@ -1,219 +1,71 @@
-import { ID, ModelNameReuseError, ModelReuseError } from '..';
-import { DataAccessObject } from '../dao';
-import { Model, ModelDefinition } from '../model';
-import { Repository } from '../repository';
+import { IRepository } from '../repository';
 import { Service } from '../service';
 
-interface IDomain {
-  [key: string]: any;
-}
-
-export class Domain implements IDomain {
+export class Domain {
   constructor(public name?: string) {}
 
-  private _dataAccessObjectMap: Record<string, DataAccessObject> = {};
-  private _modelMap: Record<string, Model<ModelDefinition>> = {};
+  private _rules: Partial<Record<keyof IRepository<any>, Function[]>> = {};
+  private _onceRules: Partial<Record<keyof IRepository<any>, Function[]>> = {};
+  private _serviceMap: Record<string, Service<any>> = {};
 
-  addDataAccessObject<T extends ModelDefinition>(name: string, dataAccessObject: DataAccessObject): void {
-    // TODO: check that name hasn't been used before
-
-    this._dataAccessObjectMap[name] = dataAccessObject;
-    Object.keys(this._modelMap).forEach((modelName) =>
-      this._dataAccessObjectMap[name].addModel(modelName, new this._modelMap[modelName].definitionType()),
-    );
-  }
-
-  addModel<T extends ModelDefinition>(name: string, model: Model<T>): void {
-    if (model.domain) {
-      throw new ModelReuseError(model);
-    }
-    if (this._modelMap[name]) {
-      throw new ModelNameReuseError(model);
-    }
-
-    model.domain = this;
-    model.name = name;
-    this._modelMap[name] = model;
-
-    Object.keys(this._dataAccessObjectMap).forEach((daoName) =>
-      this._dataAccessObjectMap[daoName].addModel<T>(name, new model.definitionType()),
-    );
-  }
-
-  // addCheck
+  // addRule
   // addPreHook
   // addPostHook
 
-  addRepository<T extends ModelDefinition>(name: string, repository: Repository<T>): void {
-    (this as IDomain)[name] = new Service<T>(repository);
+  addRule(method: keyof IRepository<any>, rule: (...args: any[]) => boolean): this {
+    if (!this._rules[method]) {
+      this._rules[method] = [];
+    }
+    this._rules[method]?.push(rule);
+    return this;
+  }
+  addRuleOnce(method: keyof IRepository<any>, rule: (...args: any[]) => boolean): this {
+    if (!this._onceRules[method]) {
+      this._onceRules[method] = [];
+    }
+    this._onceRules[method]?.push(rule);
+    return this;
   }
 
-  async create<T extends ModelDefinition>(definition: T, params: QueryParams, meta?: QueryMeta): Promise<T> {
-    // run domain checks
+  addService<T>(name: string, repository: IRepository<T>): void {
+    const service = new Service<T>(repository);
 
-    // run pre hooks
+    service.domain = this;
+    service.name = name;
+    this._serviceMap[name] = service;
 
-    // call DAOs
-
-    // run post hooks
-
-    // return created instance
-    return definition;
+    (this as any)[name] = service;
   }
 
-  async get<T extends ModelDefinition>(params: QueryParams, meta?: QueryMeta): Promise<T | undefined> {
-    return undefined;
+  async runRules(method: keyof IRepository<any>, ...args: any[]): Promise<void> {
+    const rules = this._rules[method];
+    if (rules) {
+        for (const rule of rules) {
+            const result = await rule(args);
+            if (result) {
+                continue;
+            } else {
+                throw new Error("Rule failed" + rule.name);
+            }
+        }
+    }
+
+    const rulesOnces = this._onceRules[method];
+    if (rulesOnces) {
+        for (const rule of rulesOnces) {
+            const result = rule(args);
+            if (result) {
+                // delete rule
+                this._onceRules[method]?.splice(rulesOnces.indexOf(rule), 1);
+                continue;
+            } else {
+                throw new Error("Rule failed" + rule.name);
+            }
+        }
+    }
   }
 
-  async getMany<T extends ModelDefinition>(params: QueryParams, meta?: QueryMeta): Promise<T[]> {
-    return [];
+  $(name: string): Service<any> {
+    return this._serviceMap[name];
   }
-
-  // async update<T extends Partial<ModelDefinition>>(definition: T): Promise<T> {}
-
-  // async delete<T extends Partial<ModelDefinition>>(definition: T): Promise<T> {}
-
-  // async find<T extends ModelDefinition>(name: string, query: any): Promise<T[]> {}
-
-  // async findOne<T extends ModelDefinition>(name: string, query: any): Promise<T> {}
-
-  // async count<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async aggregate<T extends ModelDefinition>(name: string, query: any): Promise<T[]> {}
-
-  // async distinct<T extends ModelDefinition>(name: string, query: any): Promise<T[]> {}
-
-  // async exists<T extends ModelDefinition>(name: string, query: any): Promise<boolean> {}
-
-  // async updateMany<T extends ModelDefinition>(name: string, query: any, update: any): Promise<number> {}
-
-  // async deleteMany<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async createMany<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async createIndexes<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dropIndexes<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async drop<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dropDatabase<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async createCollection<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async renameCollection<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async listCollections<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async listIndexes<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async stats<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async initializeOrderedBulkOp<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async initializeUnorderedBulkOp<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async bulkWrite<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async findAndModify<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async findAndRemove<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async findOneAndDelete<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async findOneAndReplace<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async findOneAndUpdate<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async geoHaystackSearch<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async geoNear<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async group<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async indexExists<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async indexInformation<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async isCapped<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async mapReduce<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async options<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async parallelCollectionScan<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async reIndex<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async remove<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async rename<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async save<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async watch<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async unwatch<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async isMaster<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async buildInfo<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async serverInfo<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async serverStatus<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dbStats<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async collStats<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async validateCollection<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async listDatabases<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async close<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async logout<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async authenticate<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async getNonce<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async getLastError<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async getLastErrorObj<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async previousErrors<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async resetErrorHistory<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async createIndex<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async ensureIndex<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dropIndex<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dropIndexes<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async reIndex<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async totalIndexSize<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async totalSize<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
-
-  // async dataSize<T extends ModelDefinition>(name: string, query: any): Promise<number> {}
 }
-
-// include things here that should be passed to the DAO
-export type QueryParams = {
-  // this is where sort, filter, pagination, etc. will go
-  // may change this to a generic type so that sort, filter etc. are strongly typed
-  // TODO: include should be here
-  model: string;
-  where?: Record<string, any>;
-};
-
-// include things here that the domain should know of but not the DAO
-export type QueryMeta = {
-  domainAccessObjects?: string[]; // TODO: strongly type this string to names of DAOs
-};

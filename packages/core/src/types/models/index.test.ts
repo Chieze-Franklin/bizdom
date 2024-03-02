@@ -1,4 +1,4 @@
-import { isID } from '.';
+import { isID } from ".";
 
 describe('Core', () => {
   it('should mark a number as ID', () => {
