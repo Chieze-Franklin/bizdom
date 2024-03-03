@@ -1,7 +1,14 @@
 import { EventEmitter } from 'events';
 import { Domain } from "../domain";
+import { RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from "../repository";
-import { Instance, OperationResult, SaveInput, UpdateInput } from "../types";
+import {
+    Instance,
+    OperationResult,
+    Rule,
+    SaveInput,
+    UpdateInput
+} from "../types";
 
 export interface IService<T> extends IRepository<T>, EventEmitter {
     // constructor(repository: IRepository<T>): void;
@@ -13,15 +20,16 @@ export type ServiceFunction<T> = (data: SaveInput<T>) => Promise<T>;
 
 export class Service<T> implements IService<T> {
     constructor(public repository: IRepository<T>) {
-        (this as any).prototype = Object.create(repository);
+        // (this as any).prototype = Object.create(repository);
+        Object.setPrototypeOf(this, Object.getPrototypeOf(repository));
         // this.createProxyMethods(repository);
     }
 
     private _eventListeners: Record<string, Function[]> = {};
     private _onceListeners: Record<string, Function[]> = {};
 
-    private _rules: Partial<Record<keyof IRepository<T>, Function[]>> = {};
-    private _onceRules: Partial<Record<keyof IRepository<T>, Function[]>> = {};
+    private _rules: Partial<Record<keyof IRepository<T>, Rule[]>> = {};
+    private _rulesOnce: Partial<Record<keyof IRepository<T>, Rule[]>> = {};
 
     private _domain?: Domain;
     get domain(): Domain | undefined {
@@ -209,18 +217,18 @@ export class Service<T> implements IService<T> {
         ];
     }
 
-    addRule(method: keyof IRepository<T>, rule: (...args: any[]) => boolean): this {
+    addRule(method: keyof IRepository<T>, rule: Rule): this {
         if (!this._rules[method]) {
             this._rules[method] = [];
         }
         this._rules[method]?.push(rule);
         return this;
     }
-    addRuleOnce(method: keyof IRepository<T>, rule: (...args: any[]) => boolean): this {
-        if (!this._onceRules[method]) {
-            this._onceRules[method] = [];
+    addRuleOnce(method: keyof IRepository<T>, rule: Rule): this {
+        if (!this._rulesOnce[method]) {
+            this._rulesOnce[method] = [];
         }
-        this._onceRules[method]?.push(rule);
+        this._rulesOnce[method]?.push(rule);
         return this;
     }
     async runRules(method: keyof IRepository<T>, ...args: any[]): Promise<void> {
@@ -228,25 +236,20 @@ export class Service<T> implements IService<T> {
         if (rules) {
             for (const rule of rules) {
                 const result = await rule(args);
-                if (result) {
-                    continue;
-                } else {
-                    throw new Error("Rule failed" + rule.name);
+                if (!result) {
+                    throw new RuleFailedError(rule);
                 }
             }
         }
 
-        const rulesOnces = this._onceRules[method];
+        const rulesOnces = this._rulesOnce[method];
         if (rulesOnces) {
             for (const rule of rulesOnces) {
                 const result = rule(args);
-                if (result) {
-                    // delete rule
-                    this._onceRules[method]?.splice(rulesOnces.indexOf(rule), 1);
-                    continue;
-                } else {
-                    throw new Error("Rule failed" + rule.name);
+                if (!result) {
+                    throw new RuleFailedError(rule);
                 }
+                this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
             }
         }
     }

@@ -1,72 +1,94 @@
 import { Domain } from '.';
-import { IQueryBuilder, IRepository } from '../repository';
-import { ID, OperationResult, SaveInput, UpdateInput } from '../types';
-
-class Character {
-  id?: ID;
-  name: string = "name";
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-class CharacterRepository implements IRepository<Character> {
-    delete(id: string): Promise<OperationResult> {
-        throw new Error('Method not implemented.');
-    }
-    deleteMany(params: IQueryBuilder<Character>): Promise<OperationResult> {
-        throw new Error('Method not implemented.');
-    }
-    get(id: string): Promise<Character | null> {
-        throw new Error('Method not implemented.');
-    }
-    getMany(params: IQueryBuilder<Character>): Promise<Character[]> {
-        throw new Error('Method not implemented.');
-    }
-    save(data: SaveInput<Character>): Promise<Character> {
-        throw new Error('Method not implemented.');
-    }
-    update(id: string, data: UpdateInput<Character>): Promise<OperationResult> {
-        throw new Error('Method not implemented.');
-    }
-    updateMany(params: IQueryBuilder<Character>, data: UpdateInput<Character>): Promise<OperationResult> {
-        throw new Error('Method not implemented.');
-    }
-}
+import { CharacterRepository } from '../mocks';
 
 describe('Domain', () => {
-  it('can add a repository to a domain', () => {
-    const domain = new Domain();
-    domain.addService('character', new CharacterRepository());
-    expect((domain as any)['character']).toBeTruthy();
-    expect(domain.$('character')).toBeTruthy();
+  describe('Services', () => {
+    it('should add a service to a domain', () => {
+      const domain = new Domain();
+      expect((domain as any)['$character']).toBeFalsy();
+      expect(domain.$('character')).toBeFalsy();
+      domain.addService('character', new CharacterRepository());
+      expect((domain as any)['$character']).toBeTruthy();
+      expect(domain.$('character')).toBeTruthy();
+    });
   });
 
-  // it('should not add a model that has already been added to a domain', () => {
-  //   const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
-  //   const domain = new Domain('domain 1');
-  //   const domain2 = new Domain('domain 2');
-  //   domain.addModel('achievement', achievementModel);
-  //   expect(() => domain.addModel('achievement', achievementModel)).toThrow();
-  //   expect(() => domain2.addModel('achievement', achievementModel)).toThrow();
-  //   expect(() => domain.addModel('another name', achievementModel)).toThrow();
-  // });
+  describe('Rules', () => {
+    it('should run a passing rule multiple times', () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule);
+      domain.runRules('save');
+      domain.runRules('save');
+      domain.runRules('save');
+      expect(rule).toHaveBeenCalledTimes(3);
+    });
 
-  // it('should not add a model with a name that has been used before', () => {
-  //   const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
-  //   const achievementModel2 = new Model<AchievementDefinition>(AchievementDefinition);
-  //   const domain = new Domain();
-  //   domain.addModel('achievement', achievementModel);
-  //   expect(() => domain.addModel('achievement', achievementModel)).toThrow();
-  //   expect(() => domain.addModel('achievement', achievementModel2)).toThrow();
-  // });
+    it('should pass arguments to rules', () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule);
+      domain.runRules('save', 'arg1', 'arg2', 'arg3');
+      expect(rule).toHaveBeenCalledWith(['arg1', 'arg2', 'arg3']);
+    });
 
-  // it('should not add a model with a name that has been used before 2', () => {
-  //   const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
-  //   const achievementModel2 = new Model<AchievementDefinition>(AchievementDefinition);
-  //   const domain = new Domain();
-  //   domain.addService('achievement', achievementModel);
-  //   domain['achievement'] = achievementModel;
-  //   expect(() => domain.addModel('achievement', achievementModel)).toThrow();
-  //   expect(() => domain.addModel('achievement', achievementModel2)).toThrow();
-  // });
+    it('should not throw an error even if no rule is provided', () => {
+      const domain = new Domain();
+      expect(domain.runRules('save')).resolves.not.toThrow();
+    });
+
+    it('should throw an error if a rule fails', () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(false));
+      domain.addRule('save', rule);
+      expect(domain.runRules('save')).rejects.toThrow();
+    });
+
+    it('should run multiple rules', async () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(true));
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule1);
+      domain.addRule('save', rule2);
+      await domain.runRules('save');
+      await domain.runRules('save');
+      await domain.runRules('save');
+      expect(rule1).toHaveBeenCalledTimes(3);
+      expect(rule2).toHaveBeenCalledTimes(3);
+    });
+
+    it('should not run following rules if a rule fails', () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(false));
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule1);
+      domain.addRule('save', rule2);
+      expect(domain.runRules('save')).rejects.toThrow();
+      expect(rule1).toHaveBeenCalled();
+      expect(rule2).not.toHaveBeenCalled();
+    });
+
+    it('should run a rule once', () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(true));
+      domain.addRuleOnce('save', rule);
+      domain.runRules('save');
+      domain.runRules('save');
+      domain.runRules('save');
+      expect(rule).toHaveBeenCalledTimes(1);
+    });
+
+    it('should run multiple rules once', async () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(true));
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      domain.addRuleOnce('save', rule1);
+      domain.addRuleOnce('save', rule2);
+      await domain.runRules('save');
+      await domain.runRules('save');
+      await domain.runRules('save');
+      expect(rule1).toHaveBeenCalledTimes(1);
+      expect(rule2).toHaveBeenCalledTimes(1);
+    });
+  });
 });

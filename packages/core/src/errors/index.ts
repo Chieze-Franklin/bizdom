@@ -1,17 +1,10 @@
-import { Model, ModelDefinition } from '..';
+import { Rule } from "../types";
 
-export class ModelReuseError<T extends ModelDefinition> extends Error {
-  constructor(model: Model<T>) {
+export class RuleFailedError extends Error {
+  constructor(rule: Rule) {
     super(
-      `Model ${model.name} has already been added to a domain${model.domain?.name ? ` (${model.domain.name})` : ''}`,
+      `Rule ${rule.name} failed. Rule must return a value of true to pass.`,
     );
-    this.name = 'ModelReuseError';
-  }
-}
-
-export class ModelNameReuseError<T extends ModelDefinition> extends Error {
-  constructor(model: Model<T>) {
-    super(`A model with the name ${model.name} has already been added to this domain`);
-    this.name = 'ModelNameReuseError';
+    this.name = 'RuleFailedError';
   }
 }

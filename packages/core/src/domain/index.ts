@@ -1,29 +1,31 @@
+import { RuleFailedError } from '../errors';
 import { IRepository } from '../repository';
 import { Service } from '../service';
+import { Rule } from '../types';
 
 export class Domain {
   constructor(public name?: string) {}
 
-  private _rules: Partial<Record<keyof IRepository<any>, Function[]>> = {};
-  private _onceRules: Partial<Record<keyof IRepository<any>, Function[]>> = {};
+  private _rules: Partial<Record<keyof IRepository<any>, Rule[]>> = {};
+  private _rulesOnce: Partial<Record<keyof IRepository<any>, Rule[]>> = {};
   private _serviceMap: Record<string, Service<any>> = {};
 
-  // addRule
   // addPreHook
   // addPostHook
 
-  addRule(method: keyof IRepository<any>, rule: (...args: any[]) => boolean): this {
-    if (!this._rules[method]) {
-      this._rules[method] = [];
-    }
-    this._rules[method]?.push(rule);
+  addRule(method: keyof IRepository<any>, rule: Rule): this {
+    // if (!this._rules[method]) {
+    //   this._rules[method] = [];
+    // }
+    // this._rules[method]?.push(rule);
+    this._rules[method] = [...(this._rules[method] || []), rule];
     return this;
   }
-  addRuleOnce(method: keyof IRepository<any>, rule: (...args: any[]) => boolean): this {
-    if (!this._onceRules[method]) {
-      this._onceRules[method] = [];
+  addRuleOnce(method: keyof IRepository<any>, rule: Rule): this {
+    if (!this._rulesOnce[method]) {
+      this._rulesOnce[method] = [];
     }
-    this._onceRules[method]?.push(rule);
+    this._rulesOnce[method]?.push(rule);
     return this;
   }
 
@@ -32,35 +34,30 @@ export class Domain {
 
     service.domain = this;
     service.name = name;
-    this._serviceMap[name] = service;
 
-    (this as any)[name] = service;
+    this._serviceMap[name] = service;
+    (this as any)[`$${name}`] = service;
   }
 
   async runRules(method: keyof IRepository<any>, ...args: any[]): Promise<void> {
     const rules = this._rules[method];
     if (rules) {
-        for (const rule of rules) {
-            const result = await rule(args);
-            if (result) {
-                continue;
-            } else {
-                throw new Error("Rule failed" + rule.name);
-            }
+      for (const rule of rules) {
+        const result = await rule(args);
+        if (!result) {
+          throw new RuleFailedError(rule);
         }
+      }
     }
 
-    const rulesOnces = this._onceRules[method];
+    const rulesOnces = this._rulesOnce[method];
     if (rulesOnces) {
         for (const rule of rulesOnces) {
             const result = rule(args);
-            if (result) {
-                // delete rule
-                this._onceRules[method]?.splice(rulesOnces.indexOf(rule), 1);
-                continue;
-            } else {
-                throw new Error("Rule failed" + rule.name);
+            if (!result) {
+              throw new RuleFailedError(rule);
             }
+            this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
         }
     }
   }
