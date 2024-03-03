@@ -39,6 +39,54 @@ There is no interface to implement or class to inherit.
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
 
+## Repositories
+
+A repository is an object that represents a collection of models. Typically, a repository
+would be responsible for CRUD (Create Read Update Delete) operations on models.
+
+```ts
+import { ID, IRepository } from '@datadom/core';
+
+interface ICharacter {
+  id?: ID;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface ICharacterRepository extends IRepository<ICharacter> {}
+
+export class CharacterRepository implements ICharacterRepository {
+    count(params?: IQueryBuilder<ICharacter>): Promise<number> {
+        throw new Error('Method not implemented.');
+    }
+    delete(id: string): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    exists(params: IQueryBuilder<ICharacter>): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
+    get(id: string): Promise<ICharacter | null> {
+        throw new Error('Method not implemented.');
+    }
+    getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
+        throw new Error('Method not implemented.');
+    }
+    save(data: SaveInput<ICharacter>): Promise<ICharacter> {
+        throw new Error('Method not implemented.');
+    }
+    update(id: string, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+}
+```
+
 ## Rules
 
 Rules are functions that resolve to boolean values and are executed before certain repository operations.

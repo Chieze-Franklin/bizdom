@@ -11,16 +11,22 @@ interface ICharacter {
 interface ICharacterRepository extends IRepository<ICharacter> {}
 
 export class CharacterRepository implements ICharacterRepository {
+    count<T>(params?: IQueryBuilder<T>): Promise<number> {
+        throw new Error('Method not implemented.');
+    }
     delete(id: string): Promise<OperationResult> {
         throw new Error('Method not implemented.');
     }
     deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
         throw new Error('Method not implemented.');
     }
+    exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
     get(id: string): Promise<ICharacter | null> {
         throw new Error('Method not implemented.');
     }
-    getMany(params: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
+    getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
         throw new Error('Method not implemented.');
     }
     save(data: SaveInput<ICharacter>): Promise<ICharacter> {

@@ -16,8 +16,6 @@ export interface IService<T> extends IRepository<T>, EventEmitter {
     createInstance(data: SaveInput<T>): Promise<Instance<T>>;
 }
 
-export type ServiceFunction<T> = (data: SaveInput<T>) => Promise<T>;
-
 export class Service<T> implements IService<T> {
     constructor(public repository: IRepository<T>) {
         // (this as any).prototype = Object.create(repository);
@@ -45,6 +43,9 @@ export class Service<T> implements IService<T> {
     }
     set name(name: string | undefined) {
         this._name = name;
+    }
+    count<T>(params: IQueryBuilder<T>): Promise<number> {
+        throw new Error('Method not implemented.');
     }
 
     create(data: SaveInput<T>): Promise<T> {
@@ -79,6 +80,9 @@ export class Service<T> implements IService<T> {
     }
     deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
         throw new Error("Method not implemented.");
+    }
+    exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
+        throw new Error('Method not implemented.');
     }
     get(id: string): Promise<T | null> {
         throw new Error("Method not implemented.");
