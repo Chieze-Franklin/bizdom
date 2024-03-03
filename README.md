@@ -53,11 +53,13 @@ import { Domain } from '@datadom/core';
 const domain = new Domain();
 
 async function entityMustHaveId(arg) {
-  return arg && !!(arg.id);
+  return !!(arg?.input?.id);
 }
 
 domain.addRule('save', entityMustHaveId);
 ```
+
+The rule `entityMustHaveId` will be executed whenever a repository wants to _save_ an entity.
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rules)
 
