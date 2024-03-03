@@ -10,9 +10,6 @@ export class Domain {
   private _rulesOnce: Partial<Record<keyof IRepository<any>, Rule[]>> = {};
   private _serviceMap: Record<string, Service<any>> = {};
 
-  // addPreHook
-  // addPostHook
-
   addRule(method: keyof IRepository<any>, rule: Rule): this {
     if (!this._rules[method]) {
       this._rules[method] = [];
@@ -42,7 +39,7 @@ export class Domain {
     const rules = this._rules[method];
     if (rules) {
       for (const rule of rules) {
-        const result = await rule(args);
+        const result = await rule(...args);
         if (!result) {
           throw new RuleFailedError(rule);
         }

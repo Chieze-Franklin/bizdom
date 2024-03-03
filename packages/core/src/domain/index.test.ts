@@ -29,7 +29,7 @@ describe('Domain', () => {
       const rule = jest.fn(() => Promise.resolve(true));
       domain.addRule('save', rule);
       domain.runRules('save', 'arg1', 'arg2', 'arg3');
-      expect(rule).toHaveBeenCalledWith(['arg1', 'arg2', 'arg3']);
+      expect(rule).toHaveBeenCalledWith('arg1', 'arg2', 'arg3');
     });
 
     it('should not throw an error even if no rule is provided', () => {

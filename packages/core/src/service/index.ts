@@ -11,20 +11,20 @@ import {
 } from "../types";
 
 export interface IService<T> extends IRepository<T>, EventEmitter {
-    // constructor(repository: IRepository<T>): void;
     create(data: SaveInput<T>): Promise<T>;
     createInstance(data: SaveInput<T>): Promise<Instance<T>>;
 }
 
 export class Service<T> implements IService<T> {
     constructor(public repository: IRepository<T>) {
-        // (this as any).prototype = Object.create(repository);
-        Object.setPrototypeOf(this, Object.getPrototypeOf(repository));
         // this.createProxyMethods(repository);
     }
 
     private _eventListeners: Record<string, Function[]> = {};
     private _onceListeners: Record<string, Function[]> = {};
+
+    private _preHooks: Partial<Record<keyof IRepository<T>, Function[]>> = {};
+    private _postHooks: Partial<Record<keyof IRepository<T>, Function[]>> = {};
 
     private _rules: Partial<Record<keyof IRepository<T>, Rule[]>> = {};
     private _rulesOnce: Partial<Record<keyof IRepository<T>, Rule[]>> = {};
@@ -44,8 +44,9 @@ export class Service<T> implements IService<T> {
     set name(name: string | undefined) {
         this._name = name;
     }
-    count<T>(params: IQueryBuilder<T>): Promise<number> {
-        throw new Error('Method not implemented.');
+
+    count<T>(params?: IQueryBuilder<T>): Promise<number> {
+        return this.repository.count(params);
     }
 
     create(data: SaveInput<T>): Promise<T> {
@@ -91,37 +92,44 @@ export class Service<T> implements IService<T> {
         throw new Error("Method not implemented.");
     }
     async save(data: SaveInput<T>): Promise<T> {
-        this.emit("saving", {
-            input: data,
-            repository: this.repository,
-            domain: this.domain,
-            serviceName: this.name
-        });
+        try {
+            this.emit("saving", {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
 
-        await this.domain?.runRules("save", {
-            input: data,
-            repository: this.repository,
-            domain: this.domain,
-            serviceName: this.name
-        });
-        await this.runRules("save", {
-            input: data,
-            repository: this.repository,
-            domain: this.domain,
-            serviceName: this.name
-        });
+            await this.domain?.runRules("save", {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
+            await this.runRules("save", {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
 
-        const model = await this.repository.save(data);
+            // const model = await this.repository.save(data);
+            const model = await this.runPreHooks("save", this.repository.save.bind(this.repository), data) as T;
 
-        this.emit("saved", {
-            input: data,
-            result: model,
-            repository: this.repository,
-            domain: this.domain,
-            serviceName: this.name
-        });
+            this.emit("saved", {
+                input: data,
+                result: model,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
 
-        return model;
+            return model;
+        }
+        catch (error) {
+            this.emit("error", error);
+            throw new Error("Error saving data");
+        }
     }
     update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
         throw new Error("Method not implemented.");
@@ -258,8 +266,61 @@ export class Service<T> implements IService<T> {
         }
     }
 
-    // addPreHook
-    // addPostHook
+    addPreHook(method: keyof IRepository<T>, hook: Function): this {
+        if (!this._preHooks[method]) {
+            this._preHooks[method] = [];
+        }
+        this._preHooks[method]?.push(hook);
+        return this;
+    }
+    pre(method: keyof IRepository<T>, hook: Function): this {
+        return this.addPreHook(method, hook);
+    }
+    addPostHook(method: keyof IRepository<T>, hook: Function): this {
+        if (!this._postHooks[method]) {
+            this._postHooks[method] = [];
+        }
+        this._postHooks[method]?.push(hook);
+        return this;
+    }
+    post(method: keyof IRepository<T>, hook: Function): this {
+        return this.addPostHook(method, hook);
+    }
+
+    // run preHooks
+    // each hook should receive a "next" function that refers to the next hook
+    async runPreHooks(method: keyof IRepository<T>, final: Function, ...args: any[]): Promise<any> {
+        const hooks = this._preHooks[method];
+        if (hooks && hooks.length) {
+            const nexts: Function[] = [];
+            for (let i = hooks.length - 1; i >= 0; i--) {
+                if (i === hooks.length - 1) {
+                    const next = async (...a: any[]) => {
+                        const finalArgs = a && a.length ? a : args;
+                        return final(...finalArgs);
+                    };
+                    nexts.push(next);
+                } else {
+                    const nextHook = hooks[i + 1];
+                    const reverseIndex = hooks.length - 2 - i;
+                    const nextNext = nexts[reverseIndex];
+                    const next = async (...a: any[]) => {
+                        const finalArgs = a && a.length ? a : args;
+                        return nextHook(...finalArgs, nextNext);
+                    };
+                    nexts.push(next);
+                }
+            }
+            // reverse the nexts so they match the order of the hooks
+            nexts.reverse();
+
+            // now call the first hook
+            const firstHook = hooks[0];
+            return firstHook(...args, nexts[0]);
+        }
+
+        return final(...args);
+    }
 
     // createProxyMethods(repository: IRepository<T>) {
     //     for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(repository))) {

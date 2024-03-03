@@ -11,6 +11,8 @@ interface ICharacter {
 interface ICharacterRepository extends IRepository<ICharacter> {}
 
 export class CharacterRepository implements ICharacterRepository {
+    repo: ICharacter[] = [];
+
     count<T>(params?: IQueryBuilder<T>): Promise<number> {
         throw new Error('Method not implemented.');
     }
@@ -30,7 +32,9 @@ export class CharacterRepository implements ICharacterRepository {
         throw new Error('Method not implemented.');
     }
     save(data: SaveInput<ICharacter>): Promise<ICharacter> {
-        throw new Error('Method not implemented.');
+        const savedData = { ...data, id: '1', createdAt: new Date(), updatedAt: new Date() };
+        this.repo.push(savedData);
+        return Promise.resolve(savedData);
     }
     update(id: string, data: UpdateInput<ICharacter>): Promise<OperationResult> {
         throw new Error('Method not implemented.');
