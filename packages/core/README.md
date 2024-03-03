@@ -79,6 +79,8 @@ export class CharacterRepository implements ICharacterRepository {
 }
 ```
 
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Repository)
+
 ## Rules
 
 Rules are functions that resolve to boolean values and are executed before certain repository operations.
