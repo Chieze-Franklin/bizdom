@@ -14,11 +14,10 @@ export class Domain {
   // addPostHook
 
   addRule(method: keyof IRepository<any>, rule: Rule): this {
-    // if (!this._rules[method]) {
-    //   this._rules[method] = [];
-    // }
-    // this._rules[method]?.push(rule);
-    this._rules[method] = [...(this._rules[method] || []), rule];
+    if (!this._rules[method]) {
+      this._rules[method] = [];
+    }
+    this._rules[method]?.push(rule);
     return this;
   }
   addRuleOnce(method: keyof IRepository<any>, rule: Rule): this {

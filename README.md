@@ -1,6 +1,6 @@
 # Datadom
 
-This package is designed to help you capture your business domains, domain models, and domain rules.
+This package is designed to help you define, tests, and execute your business domains, domain models, and domain rules.
 
 ## Goals
 
@@ -10,7 +10,7 @@ The primary goal of this project is to create a technology-agnostic way of repre
 - We can produce clean code with obvious layers of abstraction and reduced dependencies on tools.
 - We can produce domain-specific code that can be used anywhere (frontend, backend, mobile, etc.) because there is a very clear distinction between _our domain ideas_ and _the tools used in implementing those ideas_.
 - We can easily define domain boundaries, which is useful whether you are working on a monolith or a microservice.
-- It becomes easier to deal with models that may have different representations in different data sources. For instance, it becomes easier for a model to be read from (and written to) both a Postgres database and [ContentStack](https://www.contentstack.com/).
+- It becomes easier to separate side effects from domain rules and logic.
 
 ## Installation
 
@@ -32,26 +32,34 @@ const domain = new Domain();
 
 ## Models
 
-These represent your business entities. Models are created from model definitions, which are representations of their shapes.
+Domain models map to your business entities.
 
-```ts
-import { ID, Domain, Model, ModelDefinition } from '@datadom/core';
-
-class AchievementDefinition implements ModelDefinition {
-  id?: ID;
-  issueDate?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date;
-}
-
-const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
-
-const domain = new Domain();
-domain.addModel('achievement', achievementModel);
-```
+Datadom does not provide specific facilities for representing domain models.
+There is no interface to implement or class to inherit.
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
+
+## Rules
+
+Rules are functions that resolve to boolean values and are executed before certain repository operations.
+A resolved value of `false` means the rule is violated, and the repository operation should not continue.
+
+Rules can be attached to a specific service or to the domain object, in which case they are available to every service
+in the domain.
+
+```ts
+import { Domain } from '@datadom/core';
+
+const domain = new Domain();
+
+async function entityMustHaveId(arg) {
+  return arg && !!(arg.id);
+}
+
+domain.addRule('save', entityMustHaveId);
+```
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rules)
 
 ## Attributes
 

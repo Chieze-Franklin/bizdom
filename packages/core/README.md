@@ -1,6 +1,6 @@
 # @datadom/core
 
-This package contains the core elements of Datadom. These include domains, models, and model definitions.
+This package contains the core elements of Datadom. These include domains, models, and rules.
 
 For more info you can visit the [project wiki](https://github.com/Chieze-Franklin/datadom/wiki).
 
@@ -22,28 +22,36 @@ const domain = new Domain();
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Domain)
 
-## Models
+### Models
 
-These represent your business entities. Models are created from model definitions, which are representations of their shapes.
+Domain models map to your business entities.
 
-```ts
-import { ID, Domain, Model, ModelDefinition } from '@datadom/core';
-
-class AchievementDefinition implements ModelDefinition {
-  id?: ID;
-  issueDate?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date;
-}
-
-const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
-
-const domain = new Domain();
-domain.addModel('achievement', achievementModel);
-```
+Datadom does not provide specific facilities for representing domain models.
+There is no interface to implement or class to inherit.
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
+
+## Rules
+
+Rules are functions that resolve to boolean values and are executed before certain repository operations.
+A resolved value of `false` means the rule is violated, and the repository operation should not continue.
+
+Rules can be attached to a specific service or to the domain object, in which case they are available to every service
+in the domain.
+
+```ts
+import { Domain } from '@datadom/core';
+
+const domain = new Domain();
+
+async function entityMustHaveId(arg) {
+  return arg && !!(arg.id);
+}
+
+domain.addRule('save', entityMustHaveId);
+```
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rules)
 
 ## Attributes
 
