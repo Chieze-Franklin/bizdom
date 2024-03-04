@@ -2,12 +2,12 @@ import { Domain } from '.';
 import { CharacterRepository } from '../mocks';
 
 describe('Domain', () => {
-  describe('Services', () => {
-    it('should add a service to a domain', () => {
+  describe('Repository', () => {
+    it('should register a repository in a domain', () => {
       const domain = new Domain();
       expect((domain as any)['$character']).toBeFalsy();
       expect(domain.$('character')).toBeFalsy();
-      domain.addService('character', new CharacterRepository());
+      domain.registerRepository('character', new CharacterRepository());
       expect((domain as any)['$character']).toBeTruthy();
       expect(domain.$('character')).toBeTruthy();
     });

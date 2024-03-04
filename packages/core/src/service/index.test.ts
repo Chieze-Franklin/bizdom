@@ -46,6 +46,20 @@ describe('Service', () => {
       expect(model).toEqual({ name: 'test', id: '1' });
     });
 
+    it('should pass an altered data to the repository method via the hooks', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((data, next) => next({ ...data, name: 'changed in hook1' }));
+      const hook2 = jest.fn((data, next) => next({ ...data, description: 'added in hook2' }));
+      service.addPreHook('save', hook1);
+      service.addPreHook('save', hook2);
+      await service.save({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).toHaveBeenCalled();
+      expect(repository.save).toHaveBeenCalledWith({ name: 'changed in hook1', description: 'added in hook2' });
+    });
+
     it('should stop execution if a hook fails', async () => {
       const repository = new CharacterRepository();
       repository.save = jest.fn();

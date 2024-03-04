@@ -25,7 +25,7 @@ export class Domain {
     return this;
   }
 
-  addService<T>(name: string, repository: IRepository<T>): void {
+  registerRepository<T>(name: string, repository: IRepository<T>): void {
     const service = new Service<T>(repository);
 
     service.domain = this;
