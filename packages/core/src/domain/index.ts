@@ -25,7 +25,7 @@ export class Domain {
     return this;
   }
 
-  registerRepository<T>(name: string, repository: IRepository<T>): void {
+  registerRepository<T>(name: string, repository: IRepository<T>): Service<T> {
     const service = new Service<T>(repository);
 
     service.domain = this;
@@ -33,6 +33,28 @@ export class Domain {
 
     this._serviceMap[name] = service;
     (this as any)[`$${name}`] = service;
+
+    return service;
+  }
+
+  removeRepository(name: string): void {
+    delete this._serviceMap[name];
+    delete (this as any)[`$${name}`];
+  }
+
+  removeRule(method: keyof IRepository<any>, rule: Rule): void {
+    if (this._rules[method]) {
+      const index = this._rules[method]?.indexOf(rule) ?? -1;
+      if (index >= 0) {
+        this._rules[method]?.splice(index, 1);
+      }
+    }
+    if (this._rulesOnce[method]) {
+      const index = this._rulesOnce[method]?.indexOf(rule) ?? -1;
+      if (index >= 0) {
+        this._rulesOnce[method]?.splice(index, 1);
+      }
+    }
   }
 
   async runRules(method: keyof IRepository<any>, ...args: any[]): Promise<void> {
@@ -58,7 +80,7 @@ export class Domain {
     }
   }
 
-  $(name: string): Service<any> {
+  $<T>(name: string): Service<T> {
     return this._serviceMap[name];
   }
 }

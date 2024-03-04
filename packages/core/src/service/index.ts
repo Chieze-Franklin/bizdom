@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Domain } from "../domain";
-import { RuleFailedError } from '../errors';
+import { RepositoryActionError, RepositoryActionNotImplementedError, RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from "../repository";
 import {
     Instance,
@@ -75,6 +75,111 @@ export class Service<T> implements IService<T> {
         return instance;
     }
 
+    async repoAction<T>(action: keyof IRepository<T>, ...args: any[]): Promise<any> {
+        let data: any;
+        let method: Function;
+        let presentContinuousTense: string;
+        let pastTense: string;
+
+        switch (action) {
+            case "save":
+                data = args[0];
+                method = this.repository.save.bind(this.repository);
+                presentContinuousTense = "saving";
+                pastTense = "saved";
+                break;
+            case "update":
+                data = await this.repository.update(args[0], args[1]);
+                method = this.repository.update.bind(this.repository);
+                presentContinuousTense = "updating";
+                pastTense = "updated";
+                break;
+            case "delete":
+                data = await this.repository.delete(args[0]);
+                method = this.repository.delete.bind(this.repository);
+                presentContinuousTense = "deleting";
+                pastTense = "deleted";
+                break;
+            case "count":
+                data = await this.repository.count(args[0]);
+                method = this.repository.count.bind(this.repository);
+                presentContinuousTense = "counting";
+                pastTense = "counted";
+                break;
+            case "exists":
+                data = await this.repository.exists(args[0]);
+                method = this.repository.exists.bind(this.repository);
+                presentContinuousTense = "checking existence";
+                pastTense = "checked existence";
+                break;
+            case "get":
+                data = await this.repository.get(args[0]);
+                method = this.repository.get.bind(this.repository);
+                presentContinuousTense = "getting";
+                pastTense = "got";
+                break;
+            case "getMany":
+                data = await this.repository.getMany(args[0]);
+                method = this.repository.getMany.bind(this.repository);
+                presentContinuousTense = "getting many";
+                pastTense = "got many";
+                break;
+            case "deleteMany":
+                data = await this.repository.deleteMany(args[0]);
+                method = this.repository.deleteMany.bind(this.repository);
+                presentContinuousTense = "deleting many";
+                pastTense = "deleted many";
+                break;
+            case "updateMany":
+                data = await this.repository.updateMany(args[0], args[1]);
+                method = this.repository.updateMany.bind(this.repository);
+                presentContinuousTense = "updating many";
+                pastTense = "updated many";
+                break;
+            default:
+                throw new RepositoryActionNotImplementedError(action);
+        }
+
+        try {
+            this.emit(presentContinuousTense, {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
+
+            await this.domain?.runRules(action, {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
+            await this.runRules(action, {
+                input: data,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
+
+            // const result = await method(data);
+            const result = await this.runPreHooks(action, method, data) as T;
+
+            this.emit(pastTense, {
+                input: data,
+                result: result,
+                repository: this.repository,
+                domain: this.domain,
+                serviceName: this.name
+            });
+
+            return result;
+        }
+        catch (error) {
+            this.emit("error", error);
+            throw new RepositoryActionError(action, error);
+        }
+    }
+
     delete(id: string): Promise<OperationResult> {
         const result = this.repository.delete(id);
         return result;
@@ -92,44 +197,7 @@ export class Service<T> implements IService<T> {
         throw new Error("Method not implemented.");
     }
     async save(data: SaveInput<T>): Promise<T> {
-        try {
-            this.emit("saving", {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
-
-            await this.domain?.runRules("save", {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
-            await this.runRules("save", {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
-
-            // const model = await this.repository.save(data);
-            const model = await this.runPreHooks("save", this.repository.save.bind(this.repository), data) as T;
-
-            this.emit("saved", {
-                input: data,
-                result: model,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
-
-            return model;
-        }
-        catch (error) {
-            this.emit("error", error);
-            throw new Error("Error saving data");
-        }
+        return this.repoAction("save", data);
     }
     update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
         throw new Error("Method not implemented.");

@@ -7,9 +7,23 @@ describe('Domain', () => {
       const domain = new Domain();
       expect((domain as any)['$character']).toBeFalsy();
       expect(domain.$('character')).toBeFalsy();
+      const service = domain.registerRepository('character', new CharacterRepository());
+      expect((domain as any)['$character']).toBeTruthy();
+      expect(domain.$('character')).toBeTruthy();
+      expect(service).toBeTruthy();
+      expect(service.name).toBe('character');
+      expect(service.repository).toBeInstanceOf(CharacterRepository);
+      expect(service.domain).toBe(domain);
+    });
+
+    it('should remove a repository from a domain', () => {
+      const domain = new Domain();
       domain.registerRepository('character', new CharacterRepository());
       expect((domain as any)['$character']).toBeTruthy();
       expect(domain.$('character')).toBeTruthy();
+      domain.removeRepository('character');
+      expect((domain as any)['$character']).toBeFalsy();
+      expect(domain.$('character')).toBeFalsy();
     });
   });
 
@@ -68,13 +82,13 @@ describe('Domain', () => {
       expect(rule2).not.toHaveBeenCalled();
     });
 
-    it('should run a rule once', () => {
+    it('should run a rule once', async () => {
       const domain = new Domain();
       const rule = jest.fn(() => Promise.resolve(true));
       domain.addRuleOnce('save', rule);
-      domain.runRules('save');
-      domain.runRules('save');
-      domain.runRules('save');
+      await domain.runRules('save');
+      await domain.runRules('save');
+      await domain.runRules('save');
       expect(rule).toHaveBeenCalledTimes(1);
     });
 
@@ -89,6 +103,46 @@ describe('Domain', () => {
       await domain.runRules('save');
       expect(rule1).toHaveBeenCalledTimes(1);
       expect(rule2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should remove a rule', async () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule);
+      domain.removeRule('save', rule);
+      await domain.runRules('save');
+      expect(rule).not.toHaveBeenCalled();
+    });
+
+    it('should remove a rule [take 2]', async () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(true));
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule1);
+      domain.addRule('save', rule2);
+      domain.removeRule('save', rule1);
+      await domain.runRules('save');
+      expect(rule1).not.toHaveBeenCalled();
+      expect(rule2).toHaveBeenCalled();
+    });
+
+    it('should remove a rule [take 3]', async () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(true));
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      const rule3 = jest.fn(() => Promise.resolve(true));
+      const rule4 = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule1);
+      domain.addRule('save', rule2);
+      domain.addRuleOnce('save', rule3);
+      domain.addRuleOnce('save', rule4);
+      domain.removeRule('save', rule1);
+      domain.removeRule('save', rule3);
+      await domain.runRules('save');
+      expect(rule1).not.toHaveBeenCalled();
+      expect(rule2).toHaveBeenCalled();
+      expect(rule3).not.toHaveBeenCalled();
+      expect(rule4).toHaveBeenCalled();
     });
   });
 });
