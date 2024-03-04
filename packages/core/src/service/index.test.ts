@@ -60,6 +60,21 @@ describe('Service', () => {
       expect(repository.save).toHaveBeenCalledWith({ name: 'changed in hook1', description: 'added in hook2' });
     });
 
+    it('should return immediately if a hook returns', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((data, next) => Promise.resolve({ ...data, name: 'changed in hook1' }));
+      const hook2 = jest.fn((data, next) => next({ ...data, description: 'added in hook2' }));
+      service.addPreHook('save', hook1);
+      service.addPreHook('save', hook2);
+      const model = await service.save({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).not.toHaveBeenCalled();
+      expect(repository.save).not.toHaveBeenCalled();
+      expect(model).toEqual({ name: 'changed in hook1' });
+    });
+
     it('should stop execution if a hook fails', async () => {
       const repository = new CharacterRepository();
       repository.save = jest.fn();
