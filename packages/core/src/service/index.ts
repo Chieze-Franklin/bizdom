@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Domain } from "../domain";
-import { RepositoryActionError, RepositoryActionNotImplementedError, RuleFailedError } from '../errors';
+import { InstanceIdNotFoundError, RepositoryActionError, RepositoryActionNotImplementedError, RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from "../repository";
 import {
     Instance,
@@ -46,9 +46,8 @@ export class Service<T> implements IService<T> {
     }
 
     count<T>(params?: IQueryBuilder<T>): Promise<number> {
-        return this.repository.count(params);
+        return this.repoAction("count", params);
     }
-
     create(data: SaveInput<T>): Promise<T> {
         return this.save(data);
     }
@@ -59,14 +58,14 @@ export class Service<T> implements IService<T> {
             update: async () => {
                 const id = (model as any)['id'];
                 if (!id) {
-                    throw new Error("Instance does not have an id");
+                    throw new InstanceIdNotFoundError();
                 }
                 return this.update(id as string, model as UpdateInput<T>);
             },
             delete: async () => {
                 const id = (model as any)['id'];
                 if (!id) {
-                    throw new Error("Instance does not have an id");
+                    throw new InstanceIdNotFoundError();
                 }
                 return this.delete(id as string);
             }
@@ -74,103 +73,59 @@ export class Service<T> implements IService<T> {
 
         return instance;
     }
-
+    delete(id: string): Promise<OperationResult> {
+        return this.repoAction("delete", id);
+    }
+    deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
+        return this.repoAction("deleteMany", params);
+    }
     async repoAction<T>(action: keyof IRepository<T>, ...args: any[]): Promise<any> {
-        let data: any;
         let method: Function;
-        let presentContinuousTense: string;
-        let pastTense: string;
+        let preEvent = `pre${action.toLocaleLowerCase()}`;
+        let postEvent = `post${action.toLocaleLowerCase()}`;
 
         switch (action) {
-            case "save":
-                data = args[0];
-                method = this.repository.save.bind(this.repository);
-                presentContinuousTense = "saving";
-                pastTense = "saved";
-                break;
-            case "update":
-                data = await this.repository.update(args[0], args[1]);
-                method = this.repository.update.bind(this.repository);
-                presentContinuousTense = "updating";
-                pastTense = "updated";
+            case "count":
+                method = this.repository.count.bind(this.repository);
                 break;
             case "delete":
-                data = await this.repository.delete(args[0]);
                 method = this.repository.delete.bind(this.repository);
-                presentContinuousTense = "deleting";
-                pastTense = "deleted";
-                break;
-            case "count":
-                data = await this.repository.count(args[0]);
-                method = this.repository.count.bind(this.repository);
-                presentContinuousTense = "counting";
-                pastTense = "counted";
-                break;
-            case "exists":
-                data = await this.repository.exists(args[0]);
-                method = this.repository.exists.bind(this.repository);
-                presentContinuousTense = "checking existence";
-                pastTense = "checked existence";
-                break;
-            case "get":
-                data = await this.repository.get(args[0]);
-                method = this.repository.get.bind(this.repository);
-                presentContinuousTense = "getting";
-                pastTense = "got";
-                break;
-            case "getMany":
-                data = await this.repository.getMany(args[0]);
-                method = this.repository.getMany.bind(this.repository);
-                presentContinuousTense = "getting many";
-                pastTense = "got many";
                 break;
             case "deleteMany":
-                data = await this.repository.deleteMany(args[0]);
                 method = this.repository.deleteMany.bind(this.repository);
-                presentContinuousTense = "deleting many";
-                pastTense = "deleted many";
+                break;
+            case "save":
+                method = this.repository.save.bind(this.repository);
+                break;
+            case "exists":
+                method = this.repository.exists.bind(this.repository);
+                break;
+            case "get":
+                method = this.repository.get.bind(this.repository);
+                break;
+            case "getMany":
+                method = this.repository.getMany.bind(this.repository);
+                break;
+            case "update":
+                method = this.repository.update.bind(this.repository);
                 break;
             case "updateMany":
-                data = await this.repository.updateMany(args[0], args[1]);
                 method = this.repository.updateMany.bind(this.repository);
-                presentContinuousTense = "updating many";
-                pastTense = "updated many";
                 break;
             default:
                 throw new RepositoryActionNotImplementedError(action);
         }
 
         try {
-            this.emit(presentContinuousTense, {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
+            this.emit(preEvent, ...args);
 
-            await this.domain?.runRules(action, {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
-            await this.runRules(action, {
-                input: data,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
+            await this.domain?.runRules(action, ...args);
+            await this.runRules(action, ...args);
 
-            // const result = await method(data);
-            const result = await this.runPreHooks(action, method, data) as T;
+            // const result = await method(...args);
+            const result = await this.runPreHooks(action, method, ...args) as T;
 
-            this.emit(pastTense, {
-                input: data,
-                result: result,
-                repository: this.repository,
-                domain: this.domain,
-                serviceName: this.name
-            });
+            this.emit(postEvent, ...args);
 
             return result;
         }
@@ -180,13 +135,6 @@ export class Service<T> implements IService<T> {
         }
     }
 
-    delete(id: string): Promise<OperationResult> {
-        const result = this.repository.delete(id);
-        return result;
-    }
-    deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
-        throw new Error("Method not implemented.");
-    }
     exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
         throw new Error('Method not implemented.');
     }
@@ -196,14 +144,14 @@ export class Service<T> implements IService<T> {
     getMany(params: IQueryBuilder<T>): Promise<T[]> {
         throw new Error("Method not implemented.");
     }
-    async save(data: SaveInput<T>): Promise<T> {
+    save(data: SaveInput<T>): Promise<T> {
         return this.repoAction("save", data);
     }
     update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
-        throw new Error("Method not implemented.");
+        return this.repoAction("update", id, data);
     }
     updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
-        throw new Error('Method not implemented.');
+        return this.repoAction("updateMany", params, data);
     }
     addListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
         if (!this._eventListeners[eventName as string]) {

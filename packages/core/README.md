@@ -122,7 +122,7 @@ domain.$('character').addRule('save', (data) => {
   console.log('This rule runs before an entity is saved by the repository');
 
   // ensure that the entity to be saved has a "name" field
-  return !!(data?.input?.name);
+  return !!(data?.name);
 });
 domain.$('character').pre('save', (data, next) => {
   console.log('This hook/middleware runs before an entity is saved by the repository');
@@ -161,8 +161,8 @@ import { Domain } from '@datadom/core';
 
 const domain = new Domain();
 
-async function entityMustHaveId(arg) {
-  return !!(arg?.input?.id);
+async function entityMustHaveId(data) {
+  return !!(data?.id);
 }
 
 domain.addRule('save', entityMustHaveId);

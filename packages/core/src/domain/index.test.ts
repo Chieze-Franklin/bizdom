@@ -5,12 +5,12 @@ describe('Domain', () => {
   describe('Repository', () => {
     it('should register a repository in a domain', () => {
       const domain = new Domain();
-      expect((domain as any)['$character']).toBeFalsy();
-      expect(domain.$('character')).toBeFalsy();
+      expect((domain as any)['$character']).toBeUndefined();
+      expect(domain.$('character')).toBeUndefined();
       const service = domain.registerRepository('character', new CharacterRepository());
-      expect((domain as any)['$character']).toBeTruthy();
-      expect(domain.$('character')).toBeTruthy();
-      expect(service).toBeTruthy();
+      expect((domain as any)['$character']).toBeDefined();
+      expect(domain.$('character')).toBeDefined();
+      expect(service).toBeDefined();
       expect(service.name).toBe('character');
       expect(service.repository).toBeInstanceOf(CharacterRepository);
       expect(service.domain).toBe(domain);
@@ -19,11 +19,11 @@ describe('Domain', () => {
     it('should remove a repository from a domain', () => {
       const domain = new Domain();
       domain.registerRepository('character', new CharacterRepository());
-      expect((domain as any)['$character']).toBeTruthy();
-      expect(domain.$('character')).toBeTruthy();
+      expect((domain as any)['$character']).toBeDefined();
+      expect(domain.$('character')).toBeDefined();
       domain.removeRepository('character');
-      expect((domain as any)['$character']).toBeFalsy();
-      expect(domain.$('character')).toBeFalsy();
+      expect((domain as any)['$character']).toBeUndefined();
+      expect(domain.$('character')).toBeUndefined();
     });
   });
 
