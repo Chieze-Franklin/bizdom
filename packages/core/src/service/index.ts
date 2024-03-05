@@ -46,7 +46,7 @@ export class Service<T> implements IService<T> {
     }
 
     count<T>(params?: IQueryBuilder<T>): Promise<number> {
-        return this.repoAction("count", params);
+        return this.repoAction("count", this.repository.count.bind(this.repository), params);
     }
     create(data: SaveInput<T>): Promise<T> {
         return this.save(data);
@@ -74,47 +74,14 @@ export class Service<T> implements IService<T> {
         return instance;
     }
     delete(id: string): Promise<OperationResult> {
-        return this.repoAction("delete", id);
+        return this.repoAction("delete", this.repository.delete.bind(this.repository), id);
     }
     deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
-        return this.repoAction("deleteMany", params);
+        return this.repoAction("deleteMany", this.repository.deleteMany.bind(this.repository), params);
     }
-    async repoAction<T>(action: keyof IRepository<T>, ...args: any[]): Promise<any> {
-        let method: Function;
+    async repoAction<T>(action: keyof IRepository<T>, method: Function, ...args: any[]): Promise<any> {
         let preEvent = `pre${action.toLocaleLowerCase()}`;
         let postEvent = `post${action.toLocaleLowerCase()}`;
-
-        switch (action) {
-            case "count":
-                method = this.repository.count.bind(this.repository);
-                break;
-            case "delete":
-                method = this.repository.delete.bind(this.repository);
-                break;
-            case "deleteMany":
-                method = this.repository.deleteMany.bind(this.repository);
-                break;
-            case "save":
-                method = this.repository.save.bind(this.repository);
-                break;
-            case "exists":
-                method = this.repository.exists.bind(this.repository);
-                break;
-            case "get":
-                method = this.repository.get.bind(this.repository);
-                break;
-            case "getMany":
-                method = this.repository.getMany.bind(this.repository);
-                break;
-            case "update":
-                method = this.repository.update.bind(this.repository);
-                break;
-            case "updateMany":
-                method = this.repository.updateMany.bind(this.repository);
-                break;
-            default:
-                throw new RepositoryActionNotImplementedError(action);
-        }
 
         try {
             this.emit(preEvent, ...args);
@@ -145,13 +112,13 @@ export class Service<T> implements IService<T> {
         throw new Error("Method not implemented.");
     }
     save(data: SaveInput<T>): Promise<T> {
-        return this.repoAction("save", data);
+        return this.repoAction("save", this.repository.save.bind(this.repository), data);
     }
     update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("update", id, data);
+        return this.repoAction("update", this.repository.update.bind(this.repository), id, data);
     }
     updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("updateMany", params, data);
+        return this.repoAction("updateMany", this.repository.updateMany.bind(this.repository), params, data);
     }
     addListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
         if (!this._eventListeners[eventName as string]) {

@@ -29,7 +29,7 @@ Domain models map to your business entities.
 Datadom does not provide specific facilities for representing domain models.
 There is no interface to implement or class to inherit.
 
-[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Model)
 
 ## Repositories
 
@@ -87,7 +87,7 @@ A service is a wrapper around a repository.
 
 Whenever you register a repository in the domain by calling `domain.registerRepository`,
 a service of the same name is created under the hood. This service exposes the same methods exposed by the repository.
-However, a service ensures that before the relevant rules, events, and middleware are run before and
+However, a service ensures that the relevant rules, events, and middleware are run before and
 after certain repository actions.
 
 ```ts
@@ -99,7 +99,7 @@ const domain = new Domain();
 domain.registerRepository('character', new CharacterRepository());
 ```
 
-After registering a service with a domain, you can access the service in a number of ways,
+After registering a repository with a domain, you can access the wrapping service in a number of ways,
 depending on how strict your type-checking is.
 
 ```ts
@@ -170,7 +170,7 @@ domain.addRule('save', entityMustHaveId);
 
 The rule `entityMustHaveId` will be executed whenever a repository wants to _save_ an entity.
 
-[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rules)
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rule)
 
 ## Attributes
 
