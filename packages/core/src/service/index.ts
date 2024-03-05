@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Domain } from "../domain";
-import { InstanceIdNotFoundError, RepositoryActionError, RepositoryActionNotImplementedError, RuleFailedError } from '../errors';
+import { InstanceIdNotFoundError, RepositoryActionError, RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from "../repository";
 import {
     Instance,
