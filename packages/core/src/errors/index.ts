@@ -8,17 +8,17 @@ export class InstanceIdNotFoundError extends Error {
   }
 }
 
-export class RepositoryActionError extends Error {
-  constructor(action: keyof IRepository<any>, error: Error | unknown) {
-    super(`Error occurred while running ${action} on repository.\n\n${error}`);
-    this.name = 'RepositoryActionError';
+export class RepositoryMethodFailedError extends Error {
+  constructor(public method: keyof IRepository<any>, public error: Error | unknown) {
+    super(`Error occurred while running "${method}" on repository.\n\n${error}`);
+    this.name = 'RepositoryMethodFailedError';
   }
 }
 
-export class RepositoryActionNotImplementedError extends Error {
-  constructor(action: keyof IRepository<any>) {
-    super(`Method ${action} not implemented in repository`);
-    this.name = 'RepositoryActionNotImplementedError';
+export class RepositoryMethodNotImplementedError extends Error {
+  constructor(method: keyof IRepository<any>) {
+    super(`Method "${method}" not implemented in repository`);
+    this.name = 'RepositoryMethodNotImplementedError';
   }
 }
 

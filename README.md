@@ -125,7 +125,6 @@ various repository operations. This helps the repository methods to concerned wi
 have to worry about preconditions, checks, and side effects.
 
 ```ts
-domain.$('character').on('saving', () => console.log('This event handler runs before an entity is saved by the repository'));
 domain.$('character').addRule('save', (data) => {
   console.log('This rule runs before an entity is saved by the repository');
 
@@ -151,7 +150,7 @@ domain.$('character').pre('save', (data, next) => {
 
   return next({ ...data, field1: 'This field was added in a middleware' });
 });
-domain.$('character').on('saved', () => console.log('This event handler runs after an entity is saved by the repository'));
+domain.$('character').on('save', () => console.log('This event handler runs after an entity is saved by the repository'));
 ```
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Service)

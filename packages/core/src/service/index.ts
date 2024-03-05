@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Domain } from "../domain";
-import { InstanceIdNotFoundError, RepositoryActionError, RuleFailedError } from '../errors';
+import { InstanceIdNotFoundError, RepositoryMethodFailedError, RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from "../repository";
 import {
     Instance,
@@ -14,6 +14,8 @@ export interface IService<T> extends IRepository<T>, EventEmitter {
     create(data: SaveInput<T>): Promise<T>;
     createInstance(data: SaveInput<T>): Promise<Instance<T>>;
 }
+
+type EventName = keyof IRepository<any> | 'error';
 
 export class Service<T> implements IService<T> {
     constructor(public repository: IRepository<T>) {
@@ -45,6 +47,13 @@ export class Service<T> implements IService<T> {
         this._name = name;
     }
 
+    addListener(eventName: EventName, listener: (...args: any[]) => void): this {
+        if (!this._eventListeners[eventName as string]) {
+            this._eventListeners[eventName as string] = [];
+        }
+        this._eventListeners[eventName as string].push(listener);
+        return this;
+    }
     count<T>(params?: IQueryBuilder<T>): Promise<number> {
         return this.repoAction("count", this.repository.count.bind(this.repository), params);
     }
@@ -69,7 +78,7 @@ export class Service<T> implements IService<T> {
                 }
                 return this.delete(id as string);
             }
-        } as any;
+        };
 
         return instance;
     }
@@ -79,65 +88,84 @@ export class Service<T> implements IService<T> {
     deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
         return this.repoAction("deleteMany", this.repository.deleteMany.bind(this.repository), params);
     }
-    async repoAction<T>(action: keyof IRepository<T>, method: Function, ...args: any[]): Promise<any> {
-        let preEvent = `pre${action.toLocaleLowerCase()}`;
-        let postEvent = `post${action.toLocaleLowerCase()}`;
-
-        try {
-            this.emit(preEvent, ...args);
-
-            await this.domain?.runRules(action, ...args);
-            await this.runRules(action, ...args);
-
-            // const result = await method(...args);
-            const result = await this.runPreHooks(action, method, ...args) as T;
-
-            this.emit(postEvent, ...args);
-
-            return result;
+    emit(eventName: EventName, ...args: any[]): boolean {
+        const listeners = this._eventListeners[eventName as string] || [];
+        const onceListeners = this._onceListeners[eventName as string] || [];
+        const allListeners = [...listeners, ...onceListeners];
+        for (const listener of allListeners) {
+            try {
+                if ((listener as any)[Symbol.toStringTag] === "AsyncFunction") {
+                    listener(...args).catch(() => {});
+                } else {
+                    listener(...args);
+                }
+            } catch (error) {}
         }
-        catch (error) {
-            this.emit("error", error);
-            throw new RepositoryActionError(action, error);
-        }
+        delete this._onceListeners[eventName as string];
+        return true;
     }
-
+    eventNames(): (string | symbol)[] {
+        return [
+            ...Object.keys(this._eventListeners),
+            ...Object.keys(this._onceListeners)
+        ];
+    }
     exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
-        throw new Error('Method not implemented.');
+        return this.repoAction("exists", this.repository.exists.bind(this.repository), params);
     }
     get(id: string): Promise<T | null> {
-        throw new Error("Method not implemented.");
+        return this.repoAction("get", this.repository.get.bind(this.repository), id);
     }
     getMany(params: IQueryBuilder<T>): Promise<T[]> {
-        throw new Error("Method not implemented.");
+        return this.repoAction("getMany", this.repository.getMany.bind(this.repository), params);
     }
-    save(data: SaveInput<T>): Promise<T> {
-        return this.repoAction("save", this.repository.save.bind(this.repository), data);
+    getMaxListeners(): number {
+        return Infinity;
     }
-    update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("update", this.repository.update.bind(this.repository), id, data);
+    listenerCount(eventName: EventName): number {
+        return (this._eventListeners[eventName as string] || []).length + (this._onceListeners[eventName as string] || []).length;
     }
-    updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("updateMany", this.repository.updateMany.bind(this.repository), params, data);
+    listeners(eventName: EventName): Function[] {
+        return [
+            ...(this._eventListeners[eventName as string] || []),
+            ...(this._onceListeners[eventName as string] || [])
+        ];
     }
-    addListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
-        if (!this._eventListeners[eventName as string]) {
-            this._eventListeners[eventName as string] = [];
-        }
-        this._eventListeners[eventName as string].push(listener);
-        return this;
+    off(eventName: EventName, listener: (...args: any[]) => void): this {
+        return this.removeListener(eventName, listener);
     }
-    on(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    on(eventName: EventName, listener: (...args: any[]) => void): this {
         return this.addListener(eventName, listener);
     }
-    once(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    once(eventName: EventName, listener: (...args: any[]) => void): this {
         if (!this._onceListeners[eventName as string]) {
             this._onceListeners[eventName as string] = [];
         }
         this._onceListeners[eventName as string].push(listener);
         return this;
     }
-    removeListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    prependListener(eventName: EventName, listener: (...args: any[]) => void): this {
+        this._eventListeners[eventName as string].unshift(listener);
+        return this;
+    }
+    prependOnceListener(eventName: EventName, listener: (...args: any[]) => void): this {
+        this._onceListeners[eventName as string].unshift(listener);
+        return this;
+    }
+    rawListeners(eventName: EventName): Function[] {
+        return this.listeners(eventName);
+    }
+    removeAllListeners(eventName?: EventName | undefined): this {
+        if (eventName) {
+            delete this._eventListeners[eventName as string];
+            delete this._onceListeners[eventName as string];
+        } else {
+            this._eventListeners = {};
+            this._onceListeners = {};
+        }
+        return this;
+    }
+    removeListener(eventName: EventName, listener: (...args: any[]) => void): this {
         if (this._eventListeners[eventName as string]) {
             const index = this._eventListeners[eventName as string].indexOf(listener);
             if (index >= 0) {
@@ -152,64 +180,44 @@ export class Service<T> implements IService<T> {
         }
         return this;
     }
-    off(eventName: string | symbol, listener: (...args: any[]) => void): this {
-        return this.removeListener(eventName, listener);
-    }
-    removeAllListeners(event?: string | symbol | undefined): this {
-        if (event) {
-            delete this._eventListeners[event as string];
-            delete this._onceListeners[event as string];
-        } else {
-            this._eventListeners = {};
-            this._onceListeners = {};
+    async repoAction<T>(action: keyof IRepository<T>, method: Function, ...args: any[]): Promise<any> {
+        try {
+            await this.domain?.runRules(action, ...args);
+            await this.runRules(action, ...args);
+
+            // const result = await method(...args);
+            const result = await this.runPreHooks(action, method, ...args) as T;
+
+            const finalArgs = args && args.length ? args.concat(result) : [result];
+            process.nextTick(() => {
+                try {
+                    this.emit(action, ...finalArgs)
+                } catch (_) {}
+            });
+
+            return result;
         }
-        return this;
+        catch (error) {
+            const repoActionError = new RepositoryMethodFailedError(action, error);
+            process.nextTick(() => {
+                try {
+                    this.emit("error", repoActionError);
+                } catch (_) {}
+            });
+            throw repoActionError;
+        }
+    }
+    save(data: SaveInput<T>): Promise<T> {
+        return this.repoAction("save", this.repository.save.bind(this.repository), data);
     }
     setMaxListeners(n: number): this {
-        throw new Error("Method not implemented.");
-    }
-    getMaxListeners(): number {
-        throw new Error("Method not implemented.");
-    }
-    listeners(eventName: string | symbol): Function[] {
-        return [
-            ...(this._eventListeners[eventName as string] || []),
-            ...(this._onceListeners[eventName as string] || [])
-        ];
-    }
-    rawListeners(eventName: string | symbol): Function[] {
-        return this.listeners(eventName);
-    }
-    emit(eventName: string | symbol, ...args: any[]): boolean {
-        const listeners = this._eventListeners[eventName as string] || [];
-        const onceListeners = this._onceListeners[eventName as string] || [];
-        const allListeners = [...listeners, ...onceListeners];
-        for (const listener of allListeners) {
-            try {
-                listener(...args);
-            } catch (error) {
-                this.emit("error", error);
-            }
-        }
-        delete this._onceListeners[eventName as string];
-        return true;
-    }
-    listenerCount(eventName: string | symbol): number {
-        return (this._eventListeners[eventName as string] || []).length + (this._onceListeners[eventName as string] || []).length;
-    }
-    prependListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
-        this._eventListeners[eventName as string].unshift(listener);
         return this;
     }
-    prependOnceListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
-        this._onceListeners[eventName as string].unshift(listener);
-        return this;
+    update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
+        return this.repoAction("update", this.repository.update.bind(this.repository), id, data);
     }
-    eventNames(): (string | symbol)[] {
-        return [
-            ...Object.keys(this._eventListeners),
-            ...Object.keys(this._onceListeners)
-        ];
+    updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
+        return this.repoAction("updateMany", this.repository.updateMany.bind(this.repository), params, data);
     }
 
     addRule(method: keyof IRepository<T>, rule: Rule): this {
@@ -240,7 +248,7 @@ export class Service<T> implements IService<T> {
         const rulesOnces = this._rulesOnce[method];
         if (rulesOnces) {
             for (const rule of rulesOnces) {
-                const result = rule(args);
+                const result = await rule(args);
                 if (!result) {
                     throw new RuleFailedError(rule);
                 }

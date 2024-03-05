@@ -28,7 +28,15 @@ describe('Domain', () => {
   });
 
   describe('Rules', () => {
-    it('should run a passing rule multiple times', () => {
+    it('should run a rule', () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule);
+      domain.runRules('save');
+      expect(rule).toHaveBeenCalled();
+    });
+
+    it('should run a rule multiple times', () => {
       const domain = new Domain();
       const rule = jest.fn(() => Promise.resolve(true));
       domain.addRule('save', rule);

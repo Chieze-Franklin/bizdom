@@ -2,11 +2,24 @@ import { Service } from '.';
 import { CharacterRepository } from '../mocks';
 
 describe('Service', () => {
+  beforeAll(() => {
+    jest.spyOn(process, 'nextTick').mockImplementation((cb) => cb());
+  });
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   it('can create a service from a repository', () => {
     const repository = new CharacterRepository();
     const service = new Service(repository);
     expect(service).toBeDefined();
     expect(service.repository).toBe(repository);
+  });
+
+  it('should not throw an error even if no rule, hook, or event listener is provided', () => {
+    const repository = new CharacterRepository();
+    const service = new Service(repository);
+    expect(service.save({ name: 'test' })).resolves.not.toThrow();
   });
 
   describe('Create', () => {
@@ -62,6 +75,80 @@ describe('Service', () => {
       const instance = await service.createInstance({ name: 'test' });
       await expect(instance.update()).rejects.toThrow();
       expect(repository.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Events', () => {
+    it('should treat "on" as an alias for "addListener', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+      service.addListener('save', listener1);
+      service.on('save', listener2);
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalled();
+      expect(listener2).toHaveBeenCalled();
+    });
+
+    it('should pass input and output arguments to the listeners', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const listener = jest.fn();
+      service.addListener('save', listener);
+      await service.save({ name: 'test' });
+      expect(listener).toHaveBeenCalledWith({ name: 'test' }, { name: 'test', id: '1' });
+    });
+
+    it('should not throw an error even if a listener throws an error', () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener = jest.fn(() => {
+        throw new Error('test');
+      });
+      service.addListener('save', listener);
+      expect(service.save({ name: 'test' })).resolves.not.toThrow();
+    });
+
+    it('should run the following listeners even if a listener throws an error', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn(() => Promise.reject().catch(() => {}));
+      const listener2 = jest.fn();
+      service.addListener('save', listener1);
+      service.addListener('save', listener2);
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalled();
+      expect(listener2).toHaveBeenCalled();
+    });
+
+    it('should run the following listeners even if a listener throws an error [take 2]', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn(() => {
+        throw new Error('test');
+      });
+      const listener2 = jest.fn();
+      service.addListener('save', listener1);
+      service.addListener('save', listener2);
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalled();
+      expect(listener2).toHaveBeenCalled();
+    });
+
+    it('should run a listener multiple times', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+      service.addListener('save', listener1);
+      service.addListener('save', listener2);
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalledTimes(3);
+      expect(listener2).toHaveBeenCalledTimes(3);
     });
   });
 
