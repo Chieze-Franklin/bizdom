@@ -256,7 +256,7 @@ describe('Service', () => {
       const repository = new CharacterRepository();
       const service = new Service(repository);
       const rule1 = jest.fn(() => {
-        console.log('>>>>>>>>>>>>>>this actually runs; don\'t know why jest is not catching it');
+        console.log(">>>>>>>>>>>>>>this actually runs; don't know why jest is not catching it");
         return Promise.resolve(false);
       });
       const rule2 = jest.fn(() => Promise.resolve(true));
