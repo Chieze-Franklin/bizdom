@@ -179,7 +179,7 @@ The rule `entityMustHaveId` will be executed whenever a repository wants to _sav
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rule)
 
-## Attributes
+<!-- ## Attributes
 
 Fields in models can be decorated with custom attributes. This is useful for specifying information that may not be derived from TypeScript's type system.
 
@@ -223,4 +223,4 @@ console.log(biteInstance.id as any).get()) // '12345'
 
 Note that when saving to a data store `biteInstance.id` will be saved as a simple value (in this case it will be saved as `'12345'`).
 
-[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Attributes)
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Attributes) -->
