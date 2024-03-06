@@ -1,6 +1,6 @@
 # @datadom/core
 
-This package contains the core elements of Datadom. These include domains, models, and model definitions.
+This package contains the core elements of Datadom. These include domains, models, and rules.
 
 For more info you can visit the [project wiki](https://github.com/Chieze-Franklin/datadom/wiki).
 
@@ -22,30 +22,156 @@ const domain = new Domain();
 
 [Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Domain)
 
-## Models
+### Models
 
-These represent your business entities. Models are created from model definitions, which are representations of their shapes.
+Domain models map to your business entities.
+
+Datadom does not provide specific facilities for representing domain models.
+There is no interface to implement or class to inherit.
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Model)
+
+## Repositories
+
+A repository is an object that represents a collection of models. Typically, a repository
+would be responsible for CRUD (Create Read Update Delete) operations on models.
 
 ```ts
-import { ID, Domain, Model, ModelDefinition } from '@datadom/core';
+import { ID, IRepository } from '@datadom/core';
 
-class AchievementDefinition implements ModelDefinition {
+interface ICharacter {
   id?: ID;
-  issueDate?: Date;
+  name: string;
   createdAt?: Date;
   updatedAt?: Date;
-  deletedAt?: Date;
 }
 
-const achievementModel = new Model<AchievementDefinition>(AchievementDefinition);
+interface ICharacterRepository extends IRepository<ICharacter> {}
 
-const domain = new Domain();
-domain.addModel('achievement', achievementModel);
+export class CharacterRepository implements ICharacterRepository {
+    count(params?: IQueryBuilder<ICharacter>): Promise<number> {
+        throw new Error('Method not implemented.');
+    }
+    delete(id: string): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    exists(params: IQueryBuilder<ICharacter>): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
+    get(id: string): Promise<ICharacter | null> {
+        throw new Error('Method not implemented.');
+    }
+    getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
+        throw new Error('Method not implemented.');
+    }
+    save(data: SaveInput<ICharacter>): Promise<ICharacter> {
+        throw new Error('Method not implemented.');
+    }
+    update(id: string, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+    updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+        throw new Error('Method not implemented.');
+    }
+}
 ```
 
-[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Models)
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Repository)
 
-## Attributes
+## Services
+
+A service is a wrapper around a repository.
+
+Whenever you register a repository in the domain by calling `domain.registerRepository`,
+a service of the same name is created under the hood. This service exposes the same methods exposed by the repository.
+However, a service ensures that the relevant rules, events, and middleware are run before and
+after certain repository actions.
+
+```ts
+import { Domain } from '@datadom/core';
+import { CharacterRepository } from './characters';
+
+const domain = new Domain();
+
+domain.registerRepository('character', new CharacterRepository());
+```
+
+After registering a repository with a domain, you can access the wrapping service in a number of ways,
+depending on how strict your type-checking is.
+
+```ts
+// access the character service using any of the following notations:
+
+domain.$('character');
+(domain as any).$character;
+(domain as any)['$character'];
+domain.$character; // without strict type-checking
+domain['$character']; // without strict type-checking
+```
+
+You can attach various hooks, rules, and event listeners to a service to perform actions before and after
+various repository operations. This helps the repository methods to concerned with only their tasks and not
+have to worry about preconditions, checks, and side effects.
+
+```ts
+domain.$('character').addRule('save', (data) => {
+  console.log('This rule runs before an entity is saved by the repository');
+
+  // ensure that the entity to be saved has a "name" field
+  return !!(data?.name);
+});
+domain.$('character').pre('save', (data, next) => {
+  console.log('This hook/middleware runs before an entity is saved by the repository');
+
+  // call "next" to continue to the next middleware in the chain
+  // you can call "next" like this "next(data)" or simply like this "next()"
+  return next();
+});
+domain.$('character').pre('save', (data, next) => {
+  console.log('This hook/middleware runs before an entity is saved by the repository');
+
+  // call "next" to continue to the next middleware in the chain
+  // you can call "next" like this "next(data)" or simply like this "next()"
+  return next(data);
+});
+domain.$('character').pre('save', (data, next) => {
+  console.log('This hook/middleware alters the entity that is to be saved by the repository');
+
+  return next({ ...data, field1: 'This field was added in a middleware' });
+});
+domain.$('character').on('save', () => console.log('This event handler runs after an entity is saved by the repository'));
+```
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Service)
+
+## Rules
+
+Rules are functions that resolve to boolean values and are executed before repository operations.
+A resolved value of `false` means the rule is violated, and the repository operation should not continue.
+
+Rules can be attached to a specific service or to the domain object, in which case they are available to every service
+in the domain.
+
+```ts
+import { Domain } from '@datadom/core';
+
+const domain = new Domain();
+
+async function entityMustHaveId(data) {
+  return !!(data?.id);
+}
+
+domain.addRule('save', entityMustHaveId);
+```
+
+The rule `entityMustHaveId` will be executed whenever a repository wants to _save_ an entity.
+
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Rule)
+
+<!-- ## Attributes
 
 Fields in models can be decorated with custom attributes. This is useful for specifying information that may not be derived from TypeScript's type system.
 
@@ -89,4 +215,4 @@ console.log(biteInstance.id as any).get()) // '12345'
 
 Note that when saving to a data store `biteInstance.id` will be saved as a simple value (in this case it will be saved as `'12345'`).
 
-[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Attributes)
+[Read more ➡️](https://github.com/Chieze-Franklin/datadom/wiki/Attributes) -->
