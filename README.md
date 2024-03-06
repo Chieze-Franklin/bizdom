@@ -157,7 +157,7 @@ domain.$('character').on('save', () => console.log('This event handler runs afte
 
 ## Rules
 
-Rules are functions that resolve to boolean values and are executed before certain repository operations.
+Rules are functions that resolve to boolean values and are executed before repository operations.
 A resolved value of `false` means the rule is violated, and the repository operation should not continue.
 
 Rules can be attached to a specific service or to the domain object, in which case they are available to every service

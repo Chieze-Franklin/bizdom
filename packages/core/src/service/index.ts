@@ -54,6 +54,20 @@ export class Service<T> implements IService<T> {
         this._eventListeners[eventName as string].push(listener);
         return this;
     }
+    addRule(method: keyof IRepository<T>, rule: Rule): this {
+        if (!this._rules[method]) {
+            this._rules[method] = [];
+        }
+        this._rules[method]?.push(rule);
+        return this;
+    }
+    addRuleOnce(method: keyof IRepository<T>, rule: Rule): this {
+        if (!this._rulesOnce[method]) {
+            this._rulesOnce[method] = [];
+        }
+        this._rulesOnce[method]?.push(rule);
+        return this;
+    }
     count<T>(params?: IQueryBuilder<T>): Promise<number> {
         return this.repoAction("count", this.repository.count.bind(this.repository), params);
     }
@@ -180,6 +194,20 @@ export class Service<T> implements IService<T> {
         }
         return this;
     }
+    removeRule(method: keyof IRepository<any>, rule: Rule): void {
+        if (this._rules[method]) {
+            const index = this._rules[method]?.indexOf(rule) ?? -1;
+            if (index >= 0) {
+                this._rules[method]?.splice(index, 1);
+            }
+        }
+        if (this._rulesOnce[method]) {
+            const index = this._rulesOnce[method]?.indexOf(rule) ?? -1;
+            if (index >= 0) {
+                this._rulesOnce[method]?.splice(index, 1);
+            }
+        }
+    }
     async repoAction<T>(action: keyof IRepository<T>, method: Function, ...args: any[]): Promise<any> {
         try {
             await this.domain?.runRules(action, ...args);
@@ -207,33 +235,6 @@ export class Service<T> implements IService<T> {
             throw repoActionError;
         }
     }
-    save(data: SaveInput<T>): Promise<T> {
-        return this.repoAction("save", this.repository.save.bind(this.repository), data);
-    }
-    setMaxListeners(n: number): this {
-        return this;
-    }
-    update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("update", this.repository.update.bind(this.repository), id, data);
-    }
-    updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
-        return this.repoAction("updateMany", this.repository.updateMany.bind(this.repository), params, data);
-    }
-
-    addRule(method: keyof IRepository<T>, rule: Rule): this {
-        if (!this._rules[method]) {
-            this._rules[method] = [];
-        }
-        this._rules[method]?.push(rule);
-        return this;
-    }
-    addRuleOnce(method: keyof IRepository<T>, rule: Rule): this {
-        if (!this._rulesOnce[method]) {
-            this._rulesOnce[method] = [];
-        }
-        this._rulesOnce[method]?.push(rule);
-        return this;
-    }
     async runRules(method: keyof IRepository<T>, ...args: any[]): Promise<void> {
         const rules = this._rules[method];
         if (rules) {
@@ -255,6 +256,18 @@ export class Service<T> implements IService<T> {
                 this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
             }
         }
+    }
+    save(data: SaveInput<T>): Promise<T> {
+        return this.repoAction("save", this.repository.save.bind(this.repository), data);
+    }
+    setMaxListeners(n: number): this {
+        return this;
+    }
+    update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
+        return this.repoAction("update", this.repository.update.bind(this.repository), id, data);
+    }
+    updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
+        return this.repoAction("updateMany", this.repository.updateMany.bind(this.repository), params, data);
     }
 
     addPreHook(method: keyof IRepository<T>, hook: Function): this {

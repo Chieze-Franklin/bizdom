@@ -36,6 +36,19 @@ describe('Domain', () => {
       expect(rule).toHaveBeenCalled();
     });
 
+    it('should run rules attached to both domain and service', async () => {
+      const domain = new Domain();
+      const rule1 = jest.fn(() => Promise.resolve(true));
+      domain.addRule('save', rule1);
+      const repository = new CharacterRepository();
+      domain.registerRepository('character', repository);
+      const rule2 = jest.fn(() => Promise.resolve(true));
+      domain.$('character').addRule('save', rule2);
+      await domain.$('character').save({ name: 'test' });
+      expect(rule1).toHaveBeenCalled();
+      expect(rule2).toHaveBeenCalled();
+    });
+
     it('should run a rule multiple times', () => {
       const domain = new Domain();
       const rule = jest.fn(() => Promise.resolve(true));

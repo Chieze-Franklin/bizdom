@@ -200,6 +200,28 @@ describe('Service', () => {
     });
   });
 
+  describe('Rules', () => {
+    it('should run a rule', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve(true));
+      service.addRule('save', rule);
+      await service.save({ name: 'test' });
+      expect(rule).toHaveBeenCalled();
+    });
+
+    it('should run a rule multiple times', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve(true));
+      service.addRule('save', rule);
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      expect(rule).toHaveBeenCalledTimes(3);
+    });
+  });
+
   describe('Pre Hooks', () => {
     it('should run pre hooks', async () => {
       const repository = new CharacterRepository();
