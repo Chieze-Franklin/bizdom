@@ -51,6 +51,20 @@ export class Service<T> implements IService<T> {
     this._eventListeners[eventName as string].push(listener);
     return this;
   }
+  addPostHook(method: keyof IRepository<T>, hook: Func): this {
+    if (!this._postHooks[method]) {
+      this._postHooks[method] = [];
+    }
+    this._postHooks[method]?.push(hook);
+    return this;
+  }
+  addPreHook(method: keyof IRepository<T>, hook: Func): this {
+    if (!this._preHooks[method]) {
+      this._preHooks[method] = [];
+    }
+    this._preHooks[method]?.push(hook);
+    return this;
+  }
   addRule(method: keyof IRepository<T>, rule: Rule): this {
     if (!this._rules[method]) {
       this._rules[method] = [];
@@ -153,6 +167,12 @@ export class Service<T> implements IService<T> {
     this._onceListeners[eventName as string].push(listener);
     return this;
   }
+  post(method: keyof IRepository<T>, hook: Func): this {
+    return this.addPostHook(method, hook);
+  }
+  pre(method: keyof IRepository<T>, hook: Func): this {
+    return this.addPreHook(method, hook);
+  }
   prependListener(eventName: EventName, listener: (...args: any[]) => void): this {
     this._eventListeners[eventName as string].unshift(listener);
     return this;
@@ -209,9 +229,11 @@ export class Service<T> implements IService<T> {
       await this.runRules(action, ...args);
 
       // const result = await method(...args);
-      const result = (await this.runPreHooks(action, method, ...args)) as T;
+      const result = await this.runPreHooks(action, method, ...args);
 
-      const finalArgs = args && args.length ? args.concat(result) : [result];
+      const finalResult = await this.runPostHooks(action, result, ...args);
+
+      const finalArgs = args && args.length ? args.concat(finalResult) : [finalResult];
       process.nextTick(() => {
         try {
           this.emit(action, ...finalArgs);
@@ -220,7 +242,7 @@ export class Service<T> implements IService<T> {
         }
       });
 
-      return result;
+      return finalResult;
     } catch (error) {
       const repoActionError = new RepositoryMethodFailedError(action, error);
       process.nextTick(() => {
@@ -267,30 +289,6 @@ export class Service<T> implements IService<T> {
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
     return this.repoAction('updateMany', this.repository.updateMany.bind(this.repository), params, data);
   }
-
-  addPreHook(method: keyof IRepository<T>, hook: Func): this {
-    if (!this._preHooks[method]) {
-      this._preHooks[method] = [];
-    }
-    this._preHooks[method]?.push(hook);
-    return this;
-  }
-  pre(method: keyof IRepository<T>, hook: Func): this {
-    return this.addPreHook(method, hook);
-  }
-  addPostHook(method: keyof IRepository<T>, hook: Func): this {
-    if (!this._postHooks[method]) {
-      this._postHooks[method] = [];
-    }
-    this._postHooks[method]?.push(hook);
-    return this;
-  }
-  post(method: keyof IRepository<T>, hook: Func): this {
-    return this.addPostHook(method, hook);
-  }
-
-  // run preHooks
-  // each hook should receive a "next" function that refers to the next hook
   async runPreHooks(method: keyof IRepository<T>, final: Func, ...args: any[]): Promise<any> {
     const hooks = this._preHooks[method];
     if (hooks && hooks.length) {
@@ -322,6 +320,37 @@ export class Service<T> implements IService<T> {
     }
 
     return final(...args);
+  }
+  async runPostHooks(method: keyof IRepository<T>, result: any, ...args: any[]): Promise<any> {
+    const hooks = this._postHooks[method];
+    if (hooks && hooks.length) {
+      const nexts: Func[] = [];
+      for (let i = hooks.length - 1; i >= 0; i--) {
+        if (i === hooks.length - 1) {
+          const next = async (r: any) => {
+            return r ?? result;
+          };
+          nexts.push(next);
+        } else {
+          const nextHook = hooks[i + 1];
+          const reverseIndex = hooks.length - 2 - i;
+          const nextNext = nexts[reverseIndex];
+          const next = async (r: any) => {
+            const finalResult = r ?? result;
+            return nextHook(finalResult, nextNext, ...args);
+          };
+          nexts.push(next);
+        }
+      }
+      // reverse the nexts so they match the order of the hooks
+      nexts.reverse();
+
+      // now call the first hook
+      const firstHook = hooks[0];
+      return firstHook(result, nexts[0], ...args);
+    }
+
+    return result;
   }
 
   // createProxyMethods(repository: IRepository<T>) {
