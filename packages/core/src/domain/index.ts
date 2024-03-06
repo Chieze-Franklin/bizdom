@@ -71,7 +71,7 @@ export class Domain {
     const rulesOnces = this._rulesOnce[method];
     if (rulesOnces) {
       for (const rule of rulesOnces) {
-        const result = rule(args);
+        const result = await rule(...args);
         if (!result) {
           throw new RuleFailedError(rule);
         }
