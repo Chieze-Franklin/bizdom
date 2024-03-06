@@ -448,4 +448,115 @@ describe('Service', () => {
       expect(repository.save).not.toHaveBeenCalled();
     });
   });
+
+  describe('Post Hooks', () => {
+    it('should run post hooks', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const hook = jest.fn();
+      service.addPostHook('save', hook);
+      await service.save({ name: 'test' });
+      expect(hook).toHaveBeenCalled();
+    });
+
+    it('should treat "post" and "addPostHook" in the same manner', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const hook1 = jest.fn((result, next) => next());
+      const hook2 = jest.fn((result, next) => next());
+      service.addPostHook('save', hook1);
+      service.post('save', hook2);
+      await service.save({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).toHaveBeenCalled();
+    });
+
+    it('should return result from the repository method via the hooks when "next" is called without argument', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((result, next) => next());
+      const hook2 = jest.fn((result, next) => next());
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      const model = await service.save({ name: 'test' });
+      expect(repository.save).toHaveBeenCalledWith({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).toHaveBeenCalled();
+      expect(model).toEqual({ name: 'test', id: '1' });
+    });
+
+    it('should return result from the repository method via the hooks when "next" is called with unmodified argument', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((data, next) => next(data));
+      const hook2 = jest.fn((data, next) => next(data));
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      const model = await service.save({ name: 'test' });
+      expect(repository.save).toHaveBeenCalledWith({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).toHaveBeenCalled();
+      expect(model).toEqual({ name: 'test', id: '1' });
+    });
+
+    it('should return altered result from the repository method via the hooks', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((result, next) => next({ ...result, name: 'changed in hook1' }));
+      const hook2 = jest.fn((result, next) => next({ ...result, description: 'added in hook2' }));
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      const model = await service.save({ name: 'test' });
+      expect(repository.save).toHaveBeenCalledWith({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).toHaveBeenCalled();
+      expect(model).toEqual({ name: 'changed in hook1', id: '1', description: 'added in hook2' });
+    });
+
+    it('should return immediately if a hook returns', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
+      const service = new Service(repository);
+      const hook1 = jest.fn((result, next) => Promise.resolve({ ...result, name: 'changed in hook1' }));
+      const hook2 = jest.fn((result, next) => next({ ...result, description: 'added in hook2' }));
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      const model = await service.save({ name: 'test' });
+      expect(repository.save).toHaveBeenCalledWith({ name: 'test' });
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).not.toHaveBeenCalled();
+      expect(model).toEqual({ name: 'changed in hook1', id: '1' });
+    });
+
+    it('should stop execution if a hook fails', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn();
+      const service = new Service(repository);
+      const hook1 = jest.fn(() => Promise.reject());
+      const hook2 = jest.fn();
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      await expect(service.save({ name: 'test' })).rejects.toThrow();
+      expect(repository.save).toHaveBeenCalled();
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).not.toHaveBeenCalled();
+    });
+
+    it('should stop execution if a hook does not call "next()"', async () => {
+      const repository = new CharacterRepository();
+      repository.save = jest.fn();
+      const service = new Service(repository);
+      const hook1 = jest.fn();
+      const hook2 = jest.fn();
+      service.addPostHook('save', hook1);
+      service.addPostHook('save', hook2);
+      await service.save({ name: 'test' });
+      expect(repository.save).toHaveBeenCalled();
+      expect(hook1).toHaveBeenCalled();
+      expect(hook2).not.toHaveBeenCalled();
+    });
+  });
 });
