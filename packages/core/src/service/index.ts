@@ -237,7 +237,7 @@ export class Service<T> implements IService<T> {
     const rules = this._rules[method];
     if (rules) {
       for (const rule of rules) {
-        const result = await rule(args);
+        const result = await rule(...args);
         if (!result) {
           throw new RuleFailedError(rule);
         }
@@ -247,7 +247,7 @@ export class Service<T> implements IService<T> {
     const rulesOnces = this._rulesOnce[method];
     if (rulesOnces) {
       for (const rule of rulesOnces) {
-        const result = await rule(args);
+        const result = await rule(...args);
         if (!result) {
           throw new RuleFailedError(rule);
         }
