@@ -150,6 +150,54 @@ describe('Service', () => {
       expect(listener1).toHaveBeenCalledTimes(3);
       expect(listener2).toHaveBeenCalledTimes(3);
     });
+
+    it('should run multiple listeners once', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+      service.once('save', listener1);
+      service.once('save', listener2);
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should remove a listener using off or removeListener', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+      const listener3 = jest.fn();
+      service.on('save', listener1);
+      service.on('save', listener2);
+      service.on('save', listener3);
+      await service.save({ name: 'test' });
+      service.off('save', listener1);
+      await service.save({ name: 'test' });
+      service.removeListener('save', listener2);
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(2);
+      expect(listener3).toHaveBeenCalledTimes(3);
+    });
+
+    it('should remove all listeners', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+      service.on('save', listener1);
+      service.on('save', listener2);
+      await service.save({ name: 'test' });
+      service.removeAllListeners('save');
+      await service.save({ name: 'test' });
+      await service.save({ name: 'test' });
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Pre Hooks', () => {
