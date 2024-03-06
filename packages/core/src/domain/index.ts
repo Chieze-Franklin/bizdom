@@ -70,13 +70,13 @@ export class Domain {
 
     const rulesOnces = this._rulesOnce[method];
     if (rulesOnces) {
-        for (const rule of rulesOnces) {
-            const result = rule(args);
-            if (!result) {
-              throw new RuleFailedError(rule);
-            }
-            this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
+      for (const rule of rulesOnces) {
+        const result = rule(args);
+        if (!result) {
+          throw new RuleFailedError(rule);
         }
+        this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
+      }
     }
   }
 

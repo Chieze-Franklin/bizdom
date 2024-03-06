@@ -1,6 +1,6 @@
 export type Instance<T> = T & {
-    delete(): Promise<OperationResult>;
-    update(): Promise<OperationResult>;
+  delete(): Promise<OperationResult>;
+  update(): Promise<OperationResult>;
 };
 
 export type ID = string | number | bigint | symbol;

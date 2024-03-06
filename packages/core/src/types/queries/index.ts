@@ -1,7 +1,7 @@
-export * from "./number";
+export * from './number';
 
-import { NumberFields } from "./number";
-import { StringFields } from "./string";
+import { NumberFields } from './number';
+import { StringFields } from './string';
 
 export type FilterQuery<T> = NumberFields<T> | SimpleFilterQuery<T> | StringFields<T>;
 
