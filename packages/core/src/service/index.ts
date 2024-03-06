@@ -44,7 +44,7 @@ export class Service<T> implements IService<T> {
     this._name = name;
   }
 
-  addListener(eventName: EventName, listener: (...args: any[]) => void): this {
+  addListener(eventName: EventName, listener: Func): this {
     if (!this._eventListeners[eventName as string]) {
       this._eventListeners[eventName as string] = [];
     }
@@ -154,13 +154,13 @@ export class Service<T> implements IService<T> {
   listeners(eventName: EventName): Func[] {
     return [...(this._eventListeners[eventName as string] || []), ...(this._onceListeners[eventName as string] || [])];
   }
-  off(eventName: EventName, listener: (...args: any[]) => void): this {
+  off(eventName: EventName, listener: Func): this {
     return this.removeListener(eventName, listener);
   }
-  on(eventName: EventName, listener: (...args: any[]) => void): this {
+  on(eventName: EventName, listener: Func): this {
     return this.addListener(eventName, listener);
   }
-  once(eventName: EventName, listener: (...args: any[]) => void): this {
+  once(eventName: EventName, listener: Func): this {
     if (!this._onceListeners[eventName as string]) {
       this._onceListeners[eventName as string] = [];
     }
@@ -173,11 +173,11 @@ export class Service<T> implements IService<T> {
   pre(method: keyof IRepository<T>, hook: Func): this {
     return this.addPreHook(method, hook);
   }
-  prependListener(eventName: EventName, listener: (...args: any[]) => void): this {
+  prependListener(eventName: EventName, listener: Func): this {
     this._eventListeners[eventName as string].unshift(listener);
     return this;
   }
-  prependOnceListener(eventName: EventName, listener: (...args: any[]) => void): this {
+  prependOnceListener(eventName: EventName, listener: Func): this {
     this._onceListeners[eventName as string].unshift(listener);
     return this;
   }
@@ -194,7 +194,7 @@ export class Service<T> implements IService<T> {
     }
     return this;
   }
-  removeListener(eventName: EventName, listener: (...args: any[]) => void): this {
+  removeListener(eventName: EventName, listener: Func): this {
     if (this._eventListeners[eventName as string]) {
       const index = this._eventListeners[eventName as string].indexOf(listener);
       if (index >= 0) {
