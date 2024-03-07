@@ -99,6 +99,29 @@ const domain = new Domain();
 domain.registerRepository('character', new CharacterRepository());
 ```
 
+It is, however, possible to create a service without a concrete repository by calling `domain.createService`.
+This way, you can attach all the domain rules, hooks, and event listeners to the service without worrying
+about the actual repository that will be associated with the service.
+
+```ts
+import { Domain } from '@datadom/core';
+
+const domain = new Domain();
+
+domain.createService('character');
+```
+
+Services created this way are associated with a default repository of type `NullRepository`.
+
+To associated a repository to a service created this way, simply call `domain.registerRepository`.
+The `NullRepository` repository will be replaced with the provided repository, and all the service's
+previously-added rules, hooks, and event listeners will continue to function as expected. This is
+great for ensuring domain code remains decoupled from infrastructure code.
+
+```ts
+domain.registerRepository('character', new CharacterRepository());
+```
+
 After registering a repository with a domain, you can access the wrapping service in a number of ways,
 depending on how strict your type-checking is.
 

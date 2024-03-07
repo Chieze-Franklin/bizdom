@@ -1,5 +1,5 @@
 import { RuleFailedError } from '../errors';
-import { IRepository } from '../repository';
+import { IRepository, NullRepository } from '../repository';
 import { Service } from '../service';
 import { Rule } from '../types';
 
@@ -25,7 +25,10 @@ export class Domain {
     return this;
   }
 
-  registerRepository<T>(name: string, repository: IRepository<T>): Service<T> {
+  createService<T>(name: string, repository?: IRepository<T>): Service<T> {
+    if (!repository) {
+      repository = new NullRepository<T>();
+    }
     const service = new Service<T>(repository);
 
     service.domain = this;
@@ -37,9 +40,22 @@ export class Domain {
     return service;
   }
 
-  removeRepository(name: string): void {
+  deleteService(name: string): void {
     delete this._serviceMap[name];
     delete (this as any)[`$${name}`];
+  }
+
+  registerRepository<T>(name: string, repository: IRepository<T>): Service<T> {
+    if (!this._serviceMap[name]) {
+      return this.createService(name, repository);
+    } else {
+      this._serviceMap[name].repository = repository;
+      return this._serviceMap[name];
+    }
+  }
+
+  removeRepository(name: string): void {
+    this._serviceMap[name].repository = new NullRepository();
   }
 
   removeRule(method: keyof IRepository<any>, rule: Rule): void {

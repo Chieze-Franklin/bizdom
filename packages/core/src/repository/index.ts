@@ -32,3 +32,33 @@ export interface IRepository<T> {
   update(id: string, data: UpdateInput<T>): Promise<OperationResult>;
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult>;
 }
+
+export class NullRepository<T> implements IRepository<T> {
+  count<T>(params?: IQueryBuilder<T>): Promise<number> {
+    throw new Error('Method not implemented.');
+  }
+  delete(id: string): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+  deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+  exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+  get(id: string): Promise<T | null> {
+    throw new Error('Method not implemented.');
+  }
+  getMany(params?: IQueryBuilder<T>): Promise<T[]> {
+    throw new Error('Method not implemented.');
+  }
+  save(data: SaveInput<T>): Promise<T> {
+    throw new Error('Method not implemented.');
+  }
+  update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+  updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+}
