@@ -223,7 +223,7 @@ export class Service<T> implements IService<T> {
       }
     }
   }
-  async repoAction(action: keyof IRepository<T>, method: Func, ...args: any[]): Promise<any> {
+  private async repoAction(action: keyof IRepository<T>, method: Func, ...args: any[]): Promise<any> {
     try {
       await this.domain?.runRules(action, ...args);
       await this.runRules(action, ...args);
@@ -289,7 +289,7 @@ export class Service<T> implements IService<T> {
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
     return this.repoAction('updateMany', this.repository.updateMany.bind(this.repository), params, data);
   }
-  async runPreHooks(method: keyof IRepository<T>, final: Func, ...args: any[]): Promise<any> {
+  private async runPreHooks(method: keyof IRepository<T>, final: Func, ...args: any[]): Promise<any> {
     const hooks = this._preHooks[method];
     if (hooks && hooks.length) {
       const nexts: Func[] = [];
@@ -321,7 +321,7 @@ export class Service<T> implements IService<T> {
 
     return final(...args);
   }
-  async runPostHooks(method: keyof IRepository<T>, result: any, ...args: any[]): Promise<any> {
+  private async runPostHooks(method: keyof IRepository<T>, result: any, ...args: any[]): Promise<any> {
     const hooks = this._postHooks[method];
     if (hooks && hooks.length) {
       const nexts: Func[] = [];

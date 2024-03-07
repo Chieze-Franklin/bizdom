@@ -1,8 +1,29 @@
 import { Domain } from '.';
 import { CharacterRepository } from '../mocks';
+import { NullRepository } from '../repository';
 
 describe('Domain', () => {
   describe('Repository', () => {
+    it('should create a service without a repository in a domain', () => {
+      const domain = new Domain();
+      expect((domain as any)['$character']).toBeUndefined();
+      expect(domain.$('character')).toBeUndefined();
+      domain.createService('character');
+      expect((domain as any)['$character']).toBeDefined();
+      expect(domain.$('character')).toBeDefined();
+      expect(domain.$('character').repository).toBeInstanceOf(NullRepository);
+    });
+
+    it('should remove a service from a domain', () => {
+      const domain = new Domain();
+      domain.createService('character');
+      expect((domain as any)['$character']).toBeDefined();
+      expect(domain.$('character')).toBeDefined();
+      domain.deleteService('character');
+      expect((domain as any)['$character']).toBeUndefined();
+      expect(domain.$('character')).toBeUndefined();
+    });
+
     it('should register a repository in a domain', () => {
       const domain = new Domain();
       expect((domain as any)['$character']).toBeUndefined();
@@ -18,12 +39,16 @@ describe('Domain', () => {
 
     it('should remove a repository from a domain', () => {
       const domain = new Domain();
-      domain.registerRepository('character', new CharacterRepository());
+      const repository = new CharacterRepository();
+      domain.registerRepository('character', repository);
       expect((domain as any)['$character']).toBeDefined();
       expect(domain.$('character')).toBeDefined();
+      expect(domain.$('character').repository).toBe(repository);
       domain.removeRepository('character');
-      expect((domain as any)['$character']).toBeUndefined();
-      expect(domain.$('character')).toBeUndefined();
+      expect((domain as any)['$character']).toBeDefined();
+      expect(domain.$('character')).toBeDefined();
+      expect(domain.$('character').repository).not.toBe(repository);
+      expect(domain.$('character').repository).toBeInstanceOf(NullRepository);
     });
   });
 
