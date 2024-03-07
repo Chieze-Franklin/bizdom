@@ -34,7 +34,7 @@ export interface IRepository<T> {
 }
 
 export class NullRepository<T> implements IRepository<T> {
-  count<T>(params?: IQueryBuilder<T>): Promise<number> {
+  count(params?: IQueryBuilder<T>): Promise<number> {
     throw new Error('Method not implemented.');
   }
   delete(id: string): Promise<OperationResult> {
@@ -43,7 +43,7 @@ export class NullRepository<T> implements IRepository<T> {
   deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
     throw new Error('Method not implemented.');
   }
-  exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
+  exists(params: IQueryBuilder<T>): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
   get(id: string): Promise<T | null> {
