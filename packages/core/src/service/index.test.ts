@@ -49,32 +49,13 @@ describe('Service', () => {
       expect((model as any)['delete']).toBeUndefined();
       expect((model as any)['update']).toBeUndefined();
       const instance = await service.createInstance({ name: 'test' });
+      expect(instance.id).toBeDefined();
       expect(instance['delete']).toBeDefined();
       expect(instance['update']).toBeDefined();
       await instance.update();
       await instance.delete();
       expect(repository.delete).toHaveBeenCalled();
       expect(repository.update).toHaveBeenCalled();
-    });
-
-    it('should throw an error if model instance without "id" calls delete()', async () => {
-      const repository = new CharacterRepository();
-      repository.delete = jest.fn((id) => Promise.resolve({ ok: true, records: 1 }));
-      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: undefined }));
-      const service = new Service(repository);
-      const instance = await service.createInstance({ name: 'test' });
-      await expect(instance.delete()).rejects.toThrow();
-      expect(repository.delete).not.toHaveBeenCalled();
-    });
-
-    it('should throw an error if model instance without "id" calls update()', async () => {
-      const repository = new CharacterRepository();
-      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: undefined }));
-      repository.update = jest.fn((id, data) => Promise.resolve({ ok: true, records: 1 }));
-      const service = new Service(repository);
-      const instance = await service.createInstance({ name: 'test' });
-      await expect(instance.update()).rejects.toThrow();
-      expect(repository.update).not.toHaveBeenCalled();
     });
   });
 

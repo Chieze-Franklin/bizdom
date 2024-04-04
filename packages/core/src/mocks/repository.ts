@@ -1,5 +1,5 @@
 import { IQueryBuilder, IRepository } from '../repository';
-import { ID, OperationResult, SaveInput, UpdateInput } from '../types';
+import { ID, OperationResult, Persisted, SaveInput, UpdateInput } from '../types';
 
 interface ICharacter {
   id?: ID;
@@ -16,7 +16,7 @@ export class CharacterRepository implements ICharacterRepository {
   count<T>(params?: IQueryBuilder<T>): Promise<number> {
     throw new Error('Method not implemented.');
   }
-  delete(id: string): Promise<OperationResult> {
+  delete(id: ID): Promise<OperationResult> {
     throw new Error('Method not implemented.');
   }
   deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
@@ -25,18 +25,18 @@ export class CharacterRepository implements ICharacterRepository {
   exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
-  get(id: string): Promise<ICharacter | null> {
+  get(id: ID): Promise<Persisted<ICharacter> | null> {
     throw new Error('Method not implemented.');
   }
-  getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
+  getMany(params?: IQueryBuilder<ICharacter>): Promise<Persisted<ICharacter>[]> {
     throw new Error('Method not implemented.');
   }
-  save(data: SaveInput<ICharacter>): Promise<ICharacter> {
+  save(data: SaveInput<ICharacter>): Promise<Persisted<ICharacter>> {
     const savedData = { ...data, id: '1', createdAt: new Date(), updatedAt: new Date() };
     this.repo.push(savedData);
     return Promise.resolve(savedData);
   }
-  update(id: string, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+  update(id: ID, data: UpdateInput<ICharacter>): Promise<OperationResult> {
     throw new Error('Method not implemented.');
   }
   updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
