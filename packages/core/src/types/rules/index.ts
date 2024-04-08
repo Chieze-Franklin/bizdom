@@ -1,1 +1,1 @@
-export type Rule = (...args: any[]) => Promise<boolean>;
+export type Rule = (...args: any[]) => Promise<boolean | string>;

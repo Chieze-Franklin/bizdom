@@ -1,4 +1,5 @@
 import { Service } from '.';
+import { RepositoryMethodFailedError } from '../errors';
 import { CharacterRepository } from '../mocks';
 
 describe('Service', () => {
@@ -49,32 +50,13 @@ describe('Service', () => {
       expect((model as any)['delete']).toBeUndefined();
       expect((model as any)['update']).toBeUndefined();
       const instance = await service.createInstance({ name: 'test' });
+      expect(instance.id).toBeDefined();
       expect(instance['delete']).toBeDefined();
       expect(instance['update']).toBeDefined();
       await instance.update();
       await instance.delete();
       expect(repository.delete).toHaveBeenCalled();
       expect(repository.update).toHaveBeenCalled();
-    });
-
-    it('should throw an error if model instance without "id" calls delete()', async () => {
-      const repository = new CharacterRepository();
-      repository.delete = jest.fn((id) => Promise.resolve({ ok: true, records: 1 }));
-      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: undefined }));
-      const service = new Service(repository);
-      const instance = await service.createInstance({ name: 'test' });
-      await expect(instance.delete()).rejects.toThrow();
-      expect(repository.delete).not.toHaveBeenCalled();
-    });
-
-    it('should throw an error if model instance without "id" calls update()', async () => {
-      const repository = new CharacterRepository();
-      repository.save = jest.fn((data) => Promise.resolve({ ...data, id: undefined }));
-      repository.update = jest.fn((id, data) => Promise.resolve({ ok: true, records: 1 }));
-      const service = new Service(repository);
-      const instance = await service.createInstance({ name: 'test' });
-      await expect(instance.update()).rejects.toThrow();
-      expect(repository.update).not.toHaveBeenCalled();
     });
   });
 
@@ -236,6 +218,34 @@ describe('Service', () => {
       const rule = jest.fn(() => Promise.resolve(false));
       service.addRule('save', rule);
       expect(service.save({ name: 'test' })).rejects.toThrow();
+    });
+
+    it('should throw an error with default message if a rule returns an empty string', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve(''));
+      service.addRule('save', rule);
+      try {
+        await service.save({ name: 'test' });
+      } catch (error) {
+        expect(((error as unknown as RepositoryMethodFailedError).error as unknown as Error).message).toBe(
+          `Rule ${rule.name} failed. Rule must return a value of true to pass.`,
+        );
+      }
+    });
+
+    it('should throw an error with custom message if a rule returns a non-empty string', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve('Custom error message'));
+      service.addRule('save', rule);
+      try {
+        await service.save({ name: 'test' });
+      } catch (error) {
+        expect(((error as unknown as RepositoryMethodFailedError).error as unknown as Error).message).toBe(
+          'Custom error message',
+        );
+      }
     });
 
     it('should run multiple rules', async () => {

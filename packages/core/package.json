@@ -1,6 +1,6 @@
 {
     "name": "@datadom/core",
-    "version": "0.0.8",
+    "version": "0.1.1",
     "description": "A simple library for representing business/data domains and models",
     "main": "build/index.js",
     "types": "build/index.d.ts",

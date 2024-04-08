@@ -1,12 +1,12 @@
 import { EventEmitter } from 'events';
 import { Domain } from '../domain';
-import { InstanceIdNotFoundError, RepositoryMethodFailedError, RuleFailedError } from '../errors';
+import { RepositoryMethodFailedError, RuleFailedError } from '../errors';
 import { IQueryBuilder, IRepository } from '../repository';
-import { Instance, OperationResult, Rule, SaveInput, UpdateInput } from '../types';
+import { ID, Instance, OperationResult, Persisted, Rule, SaveInput, UpdateInput } from '../types';
 
 export interface IService<T> extends IRepository<T>, EventEmitter {
-  create(data: SaveInput<T>): Promise<T>;
-  createInstance(data: SaveInput<T>): Promise<Instance<T>>;
+  create(data: SaveInput<T>): Promise<Persisted<T>>;
+  createInstance(data: SaveInput<T>): Promise<Instance<Persisted<T>>>;
 }
 
 type EventName = keyof IRepository<any> | 'error';
@@ -82,32 +82,24 @@ export class Service<T> implements IService<T> {
   count(params?: IQueryBuilder<T>): Promise<number> {
     return this.repoAction('count', this.repository.count.bind(this.repository), params);
   }
-  create(data: SaveInput<T>): Promise<T> {
+  create(data: SaveInput<T>): Promise<Persisted<T>> {
     return this.save(data);
   }
-  async createInstance(data: SaveInput<T>): Promise<Instance<T>> {
+  async createInstance(data: SaveInput<T>): Promise<Instance<Persisted<T>>> {
     const model = await this.save(data);
-    const instance: Instance<T> = {
+    const instance: Instance<Persisted<T>> = {
       ...model,
       update: async () => {
-        const id = (model as any).id;
-        if (!id) {
-          throw new InstanceIdNotFoundError();
-        }
-        return this.update(id as string, model as UpdateInput<T>);
+        return this.update(model.id, model as UpdateInput<T>);
       },
       delete: async () => {
-        const id = (model as any).id;
-        if (!id) {
-          throw new InstanceIdNotFoundError();
-        }
-        return this.delete(id as string);
+        return this.delete(model.id);
       },
     };
 
     return instance;
   }
-  delete(id: string): Promise<OperationResult> {
+  delete(id: ID): Promise<OperationResult> {
     return this.repoAction('delete', this.repository.delete.bind(this.repository), id);
   }
   deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
@@ -137,10 +129,10 @@ export class Service<T> implements IService<T> {
   exists(params: IQueryBuilder<T>): Promise<boolean> {
     return this.repoAction('exists', this.repository.exists.bind(this.repository), params);
   }
-  get(id: string): Promise<T | null> {
+  get(id: ID): Promise<Persisted<T> | null> {
     return this.repoAction('get', this.repository.get.bind(this.repository), id);
   }
-  getMany(params: IQueryBuilder<T>): Promise<T[]> {
+  getMany(params: IQueryBuilder<T>): Promise<Persisted<T>[]> {
     return this.repoAction('getMany', this.repository.getMany.bind(this.repository), params);
   }
   getMaxListeners(): number {
@@ -260,7 +252,10 @@ export class Service<T> implements IService<T> {
     if (rules) {
       for (const rule of rules) {
         const result = await rule(...args);
-        if (!result) {
+        if (typeof result === 'string') {
+          throw new RuleFailedError(rule, result);
+        }
+        if (typeof result === 'boolean' && result === false) {
           throw new RuleFailedError(rule);
         }
       }
@@ -270,20 +265,23 @@ export class Service<T> implements IService<T> {
     if (rulesOnces) {
       for (const rule of rulesOnces) {
         const result = await rule(...args);
-        if (!result) {
+        if (typeof result === 'string') {
+          throw new RuleFailedError(rule, result);
+        }
+        if (typeof result === 'boolean' && result === false) {
           throw new RuleFailedError(rule);
         }
         this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);
       }
     }
   }
-  save(data: SaveInput<T>): Promise<T> {
+  save(data: SaveInput<T>): Promise<Persisted<T>> {
     return this.repoAction('save', this.repository.save.bind(this.repository), data);
   }
   setMaxListeners(n: number): this {
     return this;
   }
-  update(id: string, data: UpdateInput<T>): Promise<OperationResult> {
+  update(id: ID, data: UpdateInput<T>): Promise<OperationResult> {
     return this.repoAction('update', this.repository.update.bind(this.repository), id, data);
   }
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
