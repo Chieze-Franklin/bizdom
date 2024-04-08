@@ -52,7 +52,7 @@ export class CharacterRepository implements ICharacterRepository {
     count(params?: IQueryBuilder<ICharacter>): Promise<number> {
         throw new Error('Method not implemented.');
     }
-    delete(id: string): Promise<OperationResult> {
+    delete(id: ID): Promise<OperationResult> {
         throw new Error('Method not implemented.');
     }
     deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
@@ -61,7 +61,7 @@ export class CharacterRepository implements ICharacterRepository {
     exists(params: IQueryBuilder<ICharacter>): Promise<boolean> {
         throw new Error('Method not implemented.');
     }
-    get(id: string): Promise<ICharacter | null> {
+    get(id: ID): Promise<ICharacter | null> {
         throw new Error('Method not implemented.');
     }
     getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
@@ -70,7 +70,7 @@ export class CharacterRepository implements ICharacterRepository {
     save(data: SaveInput<ICharacter>): Promise<ICharacter> {
         throw new Error('Method not implemented.');
     }
-    update(id: string, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+    update(id: ID, data: UpdateInput<ICharacter>): Promise<OperationResult> {
         throw new Error('Method not implemented.');
     }
     updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
