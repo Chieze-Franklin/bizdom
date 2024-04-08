@@ -252,7 +252,10 @@ export class Service<T> implements IService<T> {
     if (rules) {
       for (const rule of rules) {
         const result = await rule(...args);
-        if (!result) {
+        if (typeof result === 'string') {
+          throw new RuleFailedError(rule, result);
+        }
+        if (typeof result === 'boolean' && result === false) {
           throw new RuleFailedError(rule);
         }
       }
@@ -262,7 +265,10 @@ export class Service<T> implements IService<T> {
     if (rulesOnces) {
       for (const rule of rulesOnces) {
         const result = await rule(...args);
-        if (!result) {
+        if (typeof result === 'string') {
+          throw new RuleFailedError(rule, result);
+        }
+        if (typeof result === 'boolean' && result === false) {
           throw new RuleFailedError(rule);
         }
         this._rulesOnce[method]?.splice(rulesOnces.indexOf(rule), 1);

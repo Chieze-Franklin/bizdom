@@ -104,6 +104,30 @@ describe('Domain', () => {
       expect(domain.runRules('save')).rejects.toThrow();
     });
 
+    it('should throw an error with default message if a rule returns an empty string', async () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve(''));
+      domain.addRule('save', rule);
+      try {
+        await domain.runRules('save');
+      } catch (error) {
+        expect((error as unknown as Error).message).toBe(
+          `Rule ${rule.name} failed. Rule must return a value of true to pass.`,
+        );
+      }
+    });
+
+    it('should throw an error with custom message if a rule returns a non-empty string', async () => {
+      const domain = new Domain();
+      const rule = jest.fn(() => Promise.resolve('Custom error message'));
+      domain.addRule('save', rule);
+      try {
+        await domain.runRules('save');
+      } catch (error) {
+        expect((error as unknown as Error).message).toBe('Custom error message');
+      }
+    });
+
     it('should run multiple rules', async () => {
       const domain = new Domain();
       const rule1 = jest.fn(() => Promise.resolve(true));

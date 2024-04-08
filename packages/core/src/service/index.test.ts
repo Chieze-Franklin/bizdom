@@ -1,4 +1,5 @@
 import { Service } from '.';
+import { RepositoryMethodFailedError } from '../errors';
 import { CharacterRepository } from '../mocks';
 
 describe('Service', () => {
@@ -217,6 +218,34 @@ describe('Service', () => {
       const rule = jest.fn(() => Promise.resolve(false));
       service.addRule('save', rule);
       expect(service.save({ name: 'test' })).rejects.toThrow();
+    });
+
+    it('should throw an error with default message if a rule returns an empty string', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve(''));
+      service.addRule('save', rule);
+      try {
+        await service.save({ name: 'test' });
+      } catch (error) {
+        expect(((error as unknown as RepositoryMethodFailedError).error as unknown as Error).message).toBe(
+          `Rule ${rule.name} failed. Rule must return a value of true to pass.`,
+        );
+      }
+    });
+
+    it('should throw an error with custom message if a rule returns a non-empty string', async () => {
+      const repository = new CharacterRepository();
+      const service = new Service(repository);
+      const rule = jest.fn(() => Promise.resolve('Custom error message'));
+      service.addRule('save', rule);
+      try {
+        await service.save({ name: 'test' });
+      } catch (error) {
+        expect(((error as unknown as RepositoryMethodFailedError).error as unknown as Error).message).toBe(
+          'Custom error message',
+        );
+      }
     });
 
     it('should run multiple rules', async () => {
