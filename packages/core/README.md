@@ -37,7 +37,7 @@ A repository is an object that represents a collection of models. Typically, a r
 would be responsible for CRUD (Create Read Update Delete) operations on models.
 
 ```ts
-import { ID, IRepository } from '@datadom/core';
+import { ID, IRepository, Persisted } from '@datadom/core';
 
 interface ICharacter {
   id?: ID;
@@ -61,13 +61,13 @@ export class CharacterRepository implements ICharacterRepository {
     exists(params: IQueryBuilder<ICharacter>): Promise<boolean> {
         throw new Error('Method not implemented.');
     }
-    get(id: ID): Promise<ICharacter | null> {
+    get(id: ID): Promise<Persisted<ICharacter> | null> {
         throw new Error('Method not implemented.');
     }
-    getMany(params?: IQueryBuilder<ICharacter>): Promise<ICharacter[]> {
+    getMany(params?: IQueryBuilder<ICharacter>): Promise<Persisted<ICharacter>[]> {
         throw new Error('Method not implemented.');
     }
-    save(data: SaveInput<ICharacter>): Promise<ICharacter> {
+    save(data: SaveInput<ICharacter>): Promise<Persisted<ICharacter>> {
         throw new Error('Method not implemented.');
     }
     update(id: ID, data: UpdateInput<ICharacter>): Promise<OperationResult> {
