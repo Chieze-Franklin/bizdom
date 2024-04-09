@@ -6,31 +6,31 @@ export interface IModelEntityMapper<T, Entity = any> {
 }
 
 export interface IQueryBuilder<T> {
-  and(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
+  and(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
   beginGroup(): IQueryBuilder<T>;
   build(): any;
   buildToJSON(): any;
-  endGroup(): Omit<IQueryBuilder<T>, 'where'>;
-  limit(limit: number): Omit<IQueryBuilder<T>, 'where'>;
-  or(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
-  skip(skip: number): Omit<IQueryBuilder<T>, 'where'>;
-  sort(query: SortQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
-  where(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
+  endGroup(): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  limit(limit: number): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  or(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  skip(skip: number): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  sort(query: SortQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  where(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
 }
 
 export abstract class QueryBuilder<T> implements IQueryBuilder<T> {
-  abstract and(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
+  abstract and(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
   abstract beginGroup(): IQueryBuilder<T>;
   abstract build(): any;
   buildToJSON() {
     return JSON.stringify(this.build());
   }
-  abstract endGroup(): Omit<IQueryBuilder<T>, 'where'>;
-  abstract limit(limit: number): Omit<IQueryBuilder<T>, 'where'>;
-  abstract or(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
-  abstract skip(skip: number): Omit<IQueryBuilder<T>, 'where'>;
-  abstract sort(query: SortQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
-  abstract where(query: FilterQuery<T>): Omit<IQueryBuilder<T>, 'where'>;
+  abstract endGroup(): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  abstract limit(limit: number): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  abstract or(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  abstract skip(skip: number): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  abstract sort(query: SortQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
+  abstract where(query: FilterQuery<T>): IQueryBuilder<T>; // Omit<IQueryBuilder<T>, 'where'>;
 }
 
 export interface IRepository<T> {

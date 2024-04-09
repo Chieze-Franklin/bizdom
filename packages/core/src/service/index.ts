@@ -132,7 +132,7 @@ export class Service<T> implements IService<T> {
   get(id: ID): Promise<Persisted<T> | null> {
     return this.repoAction('get', this.repository.get.bind(this.repository), id);
   }
-  getMany(params: IQueryBuilder<T>): Promise<Persisted<T>[]> {
+  getMany(params?: IQueryBuilder<T>): Promise<Persisted<T>[]> {
     return this.repoAction('getMany', this.repository.getMany.bind(this.repository), params);
   }
   getMaxListeners(): number {
