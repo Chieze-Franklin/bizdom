@@ -25,37 +25,50 @@ export class Domain {
     return this;
   }
 
-  createService<T>(name: string, repository?: IRepository<T>): Service<T> {
+  createService<T>(name: string | (new (...args: any[]) => T), repository?: IRepository<T>): Service<T> {
     if (!repository) {
       repository = new NullRepository<T>();
     }
     const service = new Service<T>(repository);
 
-    service.domain = this;
-    service.name = name;
+    const resolvedName = this.resolveName(name);
 
-    this._serviceMap[name] = service;
-    (this as any)[`$${name}`] = service;
+    service.domain = this;
+    service.name = resolvedName;
+
+    this._serviceMap[resolvedName] = service;
+    (this as any)[`$${resolvedName}`] = service;
 
     return service;
   }
 
-  deleteService(name: string): void {
-    delete this._serviceMap[name];
-    delete (this as any)[`$${name}`];
+  deleteService<T>(name: string | (new (...args: any[]) => T)): void {
+    const resolvedName = this.resolveName(name);
+    delete this._serviceMap[resolvedName];
+    delete (this as any)[`$${resolvedName}`];
   }
 
-  registerRepository<T>(name: string, repository: IRepository<T>): Service<T> {
-    if (!this._serviceMap[name]) {
-      return this.createService(name, repository);
+  private resolveName<T>(name: string | (new (...args: any[]) => T)): string {
+    if (typeof name === 'string') {
+      return name;
     } else {
-      this._serviceMap[name].repository = repository;
-      return this._serviceMap[name];
+      return name.name;
     }
   }
 
-  removeRepository(name: string): void {
-    this._serviceMap[name].repository = new NullRepository();
+  registerRepository<T>(name: string | (new (...args: any[]) => T), repository: IRepository<T>): Service<T> {
+    const resolvedName = this.resolveName(name);
+    if (!this._serviceMap[resolvedName]) {
+      return this.createService(resolvedName, repository);
+    } else {
+      this._serviceMap[resolvedName].repository = repository;
+      return this._serviceMap[resolvedName];
+    }
+  }
+
+  removeRepository<T>(name: string | (new (...args: any[]) => T)): void {
+    const resolvedName = this.resolveName(name);
+    this._serviceMap[resolvedName].repository = new NullRepository();
   }
 
   removeRule(method: keyof IRepository<any>, rule: Rule): void {
@@ -102,7 +115,8 @@ export class Domain {
     }
   }
 
-  $<T>(name: string): Service<T> {
-    return this._serviceMap[name];
+  $<T>(name: string | (new (...args: any[]) => T)): Service<T> {
+    const resolvedName = this.resolveName(name);
+    return this._serviceMap[resolvedName];
   }
 }

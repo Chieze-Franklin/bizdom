@@ -6,3 +6,4 @@ export type StringOps<T> = GreaterThanStringOp<T> | LessThanStringOp<T>;
 
 export type GreaterThanStringOp<T> = { $gt: string };
 export type LessThanStringOp<T> = { $lt: string };
+export type ArrayStringOp<T> = { $in: string[] };

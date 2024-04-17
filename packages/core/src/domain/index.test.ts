@@ -1,5 +1,5 @@
 import { Domain } from '.';
-import { CharacterRepository } from '../mocks';
+import { Character, CharacterRepository } from '../mocks';
 import { NullRepository } from '../repository';
 
 describe('Domain', () => {
@@ -14,6 +14,19 @@ describe('Domain', () => {
       expect(domain.$('character').repository).toBeInstanceOf(NullRepository);
     });
 
+    it('should create a service without a repository in a domain using the type of a model', () => {
+      const domain = new Domain();
+      expect((domain as any)['$Character']).toBeUndefined();
+      expect(domain.$('Character')).toBeUndefined();
+      expect(domain.$(Character)).toBeUndefined();
+      domain.createService(Character);
+      expect((domain as any)['$Character']).toBeDefined();
+      expect(domain.$('Character')).toBeDefined();
+      expect(domain.$(Character)).toBeDefined();
+      expect(domain.$('Character').repository).toBeInstanceOf(NullRepository);
+      expect(domain.$(Character).repository).toBeInstanceOf(NullRepository);
+    });
+
     it('should remove a service from a domain', () => {
       const domain = new Domain();
       domain.createService('character');
@@ -22,6 +35,16 @@ describe('Domain', () => {
       domain.deleteService('character');
       expect((domain as any)['$character']).toBeUndefined();
       expect(domain.$('character')).toBeUndefined();
+    });
+
+    it('should remove a service from a domain using the type of a model', () => {
+      const domain = new Domain();
+      domain.createService(Character);
+      expect((domain as any)['$Character']).toBeDefined();
+      expect(domain.$('Character')).toBeDefined();
+      domain.deleteService(Character);
+      expect((domain as any)['$Character']).toBeUndefined();
+      expect(domain.$('Character')).toBeUndefined();
     });
 
     it('should register a repository in a domain', () => {
@@ -33,6 +56,19 @@ describe('Domain', () => {
       expect(domain.$('character')).toBeDefined();
       expect(service).toBeDefined();
       expect(service.name).toBe('character');
+      expect(service.repository).toBeInstanceOf(CharacterRepository);
+      expect(service.domain).toBe(domain);
+    });
+
+    it('should register a repository in a domain using the type of a model', () => {
+      const domain = new Domain();
+      expect((domain as any)['$Character']).toBeUndefined();
+      expect(domain.$(Character)).toBeUndefined();
+      const service = domain.registerRepository(Character, new CharacterRepository());
+      expect((domain as any)['$Character']).toBeDefined();
+      expect(domain.$(Character)).toBeDefined();
+      expect(service).toBeDefined();
+      expect(service.name).toBe('Character');
       expect(service.repository).toBeInstanceOf(CharacterRepository);
       expect(service.domain).toBe(domain);
     });
@@ -49,6 +85,20 @@ describe('Domain', () => {
       expect(domain.$('character')).toBeDefined();
       expect(domain.$('character').repository).not.toBe(repository);
       expect(domain.$('character').repository).toBeInstanceOf(NullRepository);
+    });
+
+    it('should remove a repository from a domain using the type of a model', () => {
+      const domain = new Domain();
+      const repository = new CharacterRepository();
+      domain.registerRepository(Character, repository);
+      expect((domain as any)['$Character']).toBeDefined();
+      expect(domain.$(Character)).toBeDefined();
+      expect(domain.$(Character).repository).toBe(repository);
+      domain.removeRepository(Character);
+      expect((domain as any)['$Character']).toBeDefined();
+      expect(domain.$(Character)).toBeDefined();
+      expect(domain.$(Character).repository).not.toBe(repository);
+      expect(domain.$(Character).repository).toBeInstanceOf(NullRepository);
     });
   });
 

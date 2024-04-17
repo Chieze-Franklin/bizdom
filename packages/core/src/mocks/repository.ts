@@ -1,14 +1,28 @@
 import { IQueryBuilder, IRepository } from '../repository';
 import { ID, OperationResult, Persisted, SaveInput, UpdateInput } from '../types';
 
-interface ICharacter {
+export interface ICharacter {
   id?: ID;
   name: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface ICharacterRepository extends IRepository<ICharacter> {}
+export class Character implements ICharacter {
+  id?: ID;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+
+  constructor(data: ICharacter) {
+    this.id = data.id;
+    this.name = data.name;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
+  }
+}
+
+export interface ICharacterRepository extends IRepository<ICharacter> {}
 
 export class CharacterRepository implements ICharacterRepository {
   repo: ICharacter[] = [];
