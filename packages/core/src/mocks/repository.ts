@@ -30,7 +30,7 @@ export class CharacterRepository implements ICharacterRepository {
   count<T>(params?: IQueryBuilder<T>): Promise<number> {
     throw new Error('Method not implemented.');
   }
-  delete(id: ID): Promise<OperationResult> {
+  delete(id: ID): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
   deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
@@ -39,7 +39,16 @@ export class CharacterRepository implements ICharacterRepository {
   exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
-  get(id: ID): Promise<Persisted<ICharacter> | null> {
+  find(id: ID): Promise<Persisted<ICharacter> | null> {
+    throw new Error('Method not implemented.');
+  }
+  findAndDelete(id: ID): Promise<Persisted<ICharacter> | null> {
+    throw new Error('Method not implemented.');
+  }
+  findAndUpdate(id: ID, data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter> | null> {
+    throw new Error('Method not implemented.');
+  }
+  get(id: ID): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
   getMany(params?: IQueryBuilder<ICharacter>): Promise<Persisted<ICharacter>[]> {
@@ -50,7 +59,7 @@ export class CharacterRepository implements ICharacterRepository {
     this.repo.push(savedData);
     return Promise.resolve(savedData);
   }
-  update(id: ID, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+  update(id: ID, data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
   updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {

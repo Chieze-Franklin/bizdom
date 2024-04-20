@@ -99,7 +99,7 @@ export class Service<T> implements IService<T> {
 
     return instance;
   }
-  delete(id: ID): Promise<OperationResult> {
+  delete(id: ID): Promise<Persisted<T>> {
     return this.repoAction('delete', this.repository.delete.bind(this.repository), id);
   }
   deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
@@ -129,7 +129,16 @@ export class Service<T> implements IService<T> {
   exists(params: IQueryBuilder<T>): Promise<boolean> {
     return this.repoAction('exists', this.repository.exists.bind(this.repository), params);
   }
-  get(id: ID): Promise<Persisted<T> | null> {
+  find(id: ID): Promise<Persisted<T> | null> {
+    return this.repoAction('find', this.repository.find.bind(this.repository), id);
+  }
+  findAndDelete(id: ID): Promise<Persisted<T> | null> {
+    return this.repoAction('findAndDelete', this.repository.findAndDelete.bind(this.repository), id);
+  }
+  findAndUpdate(id: ID, data: UpdateInput<T>): Promise<Persisted<T> | null> {
+    return this.repoAction('findAndUpdate', this.repository.findAndUpdate.bind(this.repository), id, data);
+  }
+  get(id: ID): Promise<Persisted<T>> {
     return this.repoAction('get', this.repository.get.bind(this.repository), id);
   }
   getMany(params?: IQueryBuilder<T>): Promise<Persisted<T>[]> {
@@ -281,7 +290,7 @@ export class Service<T> implements IService<T> {
   setMaxListeners(n: number): this {
     return this;
   }
-  update(id: ID, data: UpdateInput<T>): Promise<OperationResult> {
+  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>> {
     return this.repoAction('update', this.repository.update.bind(this.repository), id, data);
   }
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {

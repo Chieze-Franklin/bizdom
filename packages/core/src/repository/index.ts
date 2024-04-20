@@ -36,16 +36,19 @@ export abstract class QueryBuilder<T> implements IQueryBuilder<T> {
 export interface IRepository<T> {
   // aggregate(params?: IQueryBuilder<T>): Promise<Persisted<T>[]>;
   count(params?: IQueryBuilder<T>): Promise<number>;
-  delete(id: ID): Promise<OperationResult>;
+  delete(id: ID): Promise<Persisted<T>>;
   deleteMany(params: IQueryBuilder<T>): Promise<OperationResult>;
   // distinct(params: IQueryBuilder<T>): Promise<Persisted<T>[]>;
   // drop(name: string, params: IQueryBuilder<T>): Promise<number>;
   exists(params: IQueryBuilder<T>): Promise<boolean>;
-  get(id: ID): Promise<Persisted<T> | null>;
+  find(id: ID): Promise<Persisted<T> | null>;
+  findAndDelete(id: ID): Promise<Persisted<T> | null>;
+  findAndUpdate(id: ID, data: UpdateInput<T>): Promise<Persisted<T> | null>;
+  get(id: ID): Promise<Persisted<T>>;
   getMany(params?: IQueryBuilder<T>): Promise<Persisted<T>[]>;
   // group(name: string, params?: IQueryBuilder<T>): Promise<number>;
   save(data: SaveInput<T>): Promise<Persisted<T>>;
-  update(id: ID, data: UpdateInput<T>): Promise<OperationResult>;
+  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>>;
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult>;
 }
 
@@ -53,7 +56,7 @@ export class NullRepository<T> implements IRepository<T> {
   count(params?: IQueryBuilder<T>): Promise<number> {
     throw new Error('Method not implemented.');
   }
-  delete(id: ID): Promise<OperationResult> {
+  delete(id: ID): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
   deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
@@ -62,7 +65,16 @@ export class NullRepository<T> implements IRepository<T> {
   exists(params: IQueryBuilder<T>): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
-  get(id: ID): Promise<Persisted<T> | null> {
+  find(id: ID): Promise<Persisted<T> | null> {
+    throw new Error('Method not implemented.');
+  }
+  findAndDelete(id: ID): Promise<Persisted<T> | null> {
+    throw new Error('Method not implemented.');
+  }
+  findAndUpdate(id: ID, data: UpdateInput<T>): Promise<Persisted<T> | null> {
+    throw new Error('Method not implemented.');
+  }
+  get(id: ID): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
   getMany(params?: IQueryBuilder<T>): Promise<Persisted<T>[]> {
@@ -71,7 +83,7 @@ export class NullRepository<T> implements IRepository<T> {
   save(data: SaveInput<T>): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
-  update(id: ID, data: UpdateInput<T>): Promise<OperationResult> {
+  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
