@@ -1,5 +1,5 @@
 export type NumberFields<T> = {
-  [key in keyof T]: T[key] extends number ? NumberOps<T> : never;
+  [key in keyof T]?: T[key] extends number ? NumberOps<T> : never;
 };
 
 export type NumberOps<T> = ArrayNumberOp<T> | GreaterThanNumberOp<T> | LessThanNumberOp<T>;

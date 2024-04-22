@@ -1,5 +1,5 @@
 export type StringFields<T> = {
-  [key in keyof T]: T[key] extends string ? StringOps<T> : never;
+  [key in keyof T]?: T[key] extends string ? StringOps<T> : never;
 };
 
 export type StringOps<T> = ArrayStringOp<T> | GreaterThanStringOp<T> | LessThanStringOp<T>;
