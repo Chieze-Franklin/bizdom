@@ -90,7 +90,7 @@ export class Service<T> implements IService<T> {
     const instance: Instance<Persisted<T>> = {
       ...model,
       update: async () => {
-        return this.update(model.id, model as UpdateInput<T>);
+        return this.update(model as UpdateInput<T>);
       },
       delete: async () => {
         return this.delete(model.id);
@@ -290,8 +290,8 @@ export class Service<T> implements IService<T> {
   setMaxListeners(n: number): this {
     return this;
   }
-  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>> {
-    return this.repoAction('update', this.repository.update.bind(this.repository), id, data);
+  update(data: UpdateInput<T>): Promise<Persisted<T>> {
+    return this.repoAction('update', this.repository.update.bind(this.repository), data);
   }
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
     return this.repoAction('updateMany', this.repository.updateMany.bind(this.repository), params, data);
