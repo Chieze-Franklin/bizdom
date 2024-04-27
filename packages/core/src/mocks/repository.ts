@@ -59,7 +59,7 @@ export class CharacterRepository implements ICharacterRepository {
     this.repo.push(savedData);
     return Promise.resolve(savedData);
   }
-  update(id: ID, data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter>> {
+  update(data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
   updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {

@@ -48,7 +48,7 @@ export interface IRepository<T> {
   getMany(params?: IQueryBuilder<T>): Promise<Persisted<T>[]>;
   // group(name: string, params?: IQueryBuilder<T>): Promise<number>;
   save(data: SaveInput<T>): Promise<Persisted<T>>;
-  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>>;
+  update(data: UpdateInput<T>): Promise<Persisted<T>>;
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult>;
 }
 
@@ -83,7 +83,7 @@ export class NullRepository<T> implements IRepository<T> {
   save(data: SaveInput<T>): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
-  update(id: ID, data: UpdateInput<T>): Promise<Persisted<T>> {
+  update(data: UpdateInput<T>): Promise<Persisted<T>> {
     throw new Error('Method not implemented.');
   }
   updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {

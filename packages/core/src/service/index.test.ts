@@ -45,7 +45,7 @@ describe('Service', () => {
       const character = new Character({ name: 'test' });
       repository.delete = jest.fn((id) => Promise.resolve({ ...character, id }));
       repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
-      repository.update = jest.fn((id, data) => Promise.resolve({ ...character, id }));
+      repository.update = jest.fn((data) => Promise.resolve({ ...character, id: '1' }));
       const service = new Service(repository);
       const model = await service.create({ name: 'test' });
       expect((model as any)['delete']).toBeUndefined();
