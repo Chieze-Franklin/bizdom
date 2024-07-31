@@ -1,6 +1,6 @@
 import { Service } from '.';
 import { RepositoryMethodFailedError } from '../errors';
-import { CharacterRepository } from '../mocks';
+import { Character, CharacterRepository } from '../mocks';
 
 describe('Service', () => {
   beforeAll(() => {
@@ -42,9 +42,10 @@ describe('Service', () => {
   describe('Create Instance', () => {
     it('should create a model instance that can update and delete itself', async () => {
       const repository = new CharacterRepository();
-      repository.delete = jest.fn((id) => Promise.resolve({ ok: true, records: 1 }));
+      const character = new Character({ name: 'test' });
+      repository.delete = jest.fn((id) => Promise.resolve({ ...character, id }));
       repository.save = jest.fn((data) => Promise.resolve({ ...data, id: '1' }));
-      repository.update = jest.fn((id, data) => Promise.resolve({ ok: true, records: 1 }));
+      repository.update = jest.fn((data) => Promise.resolve({ ...character, id: '1' }));
       const service = new Service(repository);
       const model = await service.create({ name: 'test' });
       expect((model as any)['delete']).toBeUndefined();

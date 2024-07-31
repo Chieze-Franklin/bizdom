@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Domain } from '../domain';
 import { RepositoryMethodFailedError, RuleFailedError } from '../errors';
-import { IQueryBuilder, IRepository } from '../repository';
+import { IQueryOptions, IRepository } from '../repository';
 import { ID, Instance, OperationResult, Persisted, Rule, SaveInput, UpdateInput } from '../types';
 
 export interface IService<T> extends IRepository<T>, EventEmitter {
@@ -79,8 +79,8 @@ export class Service<T> implements IService<T> {
     this._rulesOnce[method]?.push(rule);
     return this;
   }
-  count(params?: IQueryBuilder<T>): Promise<number> {
-    return this.repoAction('count', this.repository.count.bind(this.repository), params);
+  count(options?: IQueryOptions<T>): Promise<number> {
+    return this.repoAction('count', this.repository.count.bind(this.repository), options);
   }
   create(data: SaveInput<T>): Promise<Persisted<T>> {
     return this.save(data);
@@ -90,7 +90,7 @@ export class Service<T> implements IService<T> {
     const instance: Instance<Persisted<T>> = {
       ...model,
       update: async () => {
-        return this.update(model.id, model as UpdateInput<T>);
+        return this.update(model as UpdateInput<T>);
       },
       delete: async () => {
         return this.delete(model.id);
@@ -99,11 +99,11 @@ export class Service<T> implements IService<T> {
 
     return instance;
   }
-  delete(id: ID): Promise<OperationResult> {
+  delete(id: ID): Promise<Persisted<T>> {
     return this.repoAction('delete', this.repository.delete.bind(this.repository), id);
   }
-  deleteMany(params: IQueryBuilder<T>): Promise<OperationResult> {
-    return this.repoAction('deleteMany', this.repository.deleteMany.bind(this.repository), params);
+  deleteMany(options: IQueryOptions<T>): Promise<OperationResult> {
+    return this.repoAction('deleteMany', this.repository.deleteMany.bind(this.repository), options);
   }
   emit(eventName: EventName, ...args: any[]): boolean {
     const listeners = this._eventListeners[eventName as string] || [];
@@ -126,14 +126,23 @@ export class Service<T> implements IService<T> {
   eventNames(): (string | symbol)[] {
     return [...Object.keys(this._eventListeners), ...Object.keys(this._onceListeners)];
   }
-  exists(params: IQueryBuilder<T>): Promise<boolean> {
-    return this.repoAction('exists', this.repository.exists.bind(this.repository), params);
+  exists(options: IQueryOptions<T>): Promise<boolean> {
+    return this.repoAction('exists', this.repository.exists.bind(this.repository), options);
   }
-  get(id: ID): Promise<Persisted<T> | null> {
-    return this.repoAction('get', this.repository.get.bind(this.repository), id);
+  find(id: ID, options?: IQueryOptions<T>): Promise<Persisted<T> | null> {
+    return this.repoAction('find', this.repository.find.bind(this.repository), id, options);
   }
-  getMany(params: IQueryBuilder<T>): Promise<Persisted<T>[]> {
-    return this.repoAction('getMany', this.repository.getMany.bind(this.repository), params);
+  findAndDelete(id: ID): Promise<Persisted<T> | null> {
+    return this.repoAction('findAndDelete', this.repository.findAndDelete.bind(this.repository), id);
+  }
+  findAndUpdate(id: ID, data: UpdateInput<T>): Promise<Persisted<T> | null> {
+    return this.repoAction('findAndUpdate', this.repository.findAndUpdate.bind(this.repository), id, data);
+  }
+  get(id: ID, options?: IQueryOptions<T>): Promise<Persisted<T>> {
+    return this.repoAction('get', this.repository.get.bind(this.repository), id, options);
+  }
+  getMany(options?: IQueryOptions<T>): Promise<Persisted<T>[]> {
+    return this.repoAction('getMany', this.repository.getMany.bind(this.repository), options);
   }
   getMaxListeners(): number {
     return Infinity;
@@ -281,11 +290,11 @@ export class Service<T> implements IService<T> {
   setMaxListeners(n: number): this {
     return this;
   }
-  update(id: ID, data: UpdateInput<T>): Promise<OperationResult> {
-    return this.repoAction('update', this.repository.update.bind(this.repository), id, data);
+  update(data: UpdateInput<T>): Promise<Persisted<T>> {
+    return this.repoAction('update', this.repository.update.bind(this.repository), data);
   }
-  updateMany(params: IQueryBuilder<T>, data: UpdateInput<T>): Promise<OperationResult> {
-    return this.repoAction('updateMany', this.repository.updateMany.bind(this.repository), params, data);
+  updateMany(options: IQueryOptions<T>, data: UpdateInput<T>): Promise<OperationResult> {
+    return this.repoAction('updateMany', this.repository.updateMany.bind(this.repository), options, data);
   }
   private async runPreHooks(method: keyof IRepository<T>, final: Func, ...args: any[]): Promise<any> {
     const hooks = this._preHooks[method];

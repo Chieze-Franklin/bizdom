@@ -1,6 +1,8 @@
+import { Persisted } from '..';
+
 export type Instance<T> = T & {
-  delete(): Promise<OperationResult>;
-  update(): Promise<OperationResult>;
+  delete(): Promise<Persisted<T>>;
+  update(): Promise<Persisted<T>>;
 };
 
 export type ID = string | number | bigint | symbol;
