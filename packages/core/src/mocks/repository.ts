@@ -1,4 +1,4 @@
-import { IQueryBuilder, IRepository } from '../repository';
+import { IQueryOptions, IRepository } from '../repository';
 import { ID, OperationResult, Persisted, SaveInput, UpdateInput } from '../types';
 
 export interface ICharacter {
@@ -27,19 +27,19 @@ export interface ICharacterRepository extends IRepository<ICharacter> {}
 export class CharacterRepository implements ICharacterRepository {
   repo: ICharacter[] = [];
 
-  count<T>(params?: IQueryBuilder<T>): Promise<number> {
+  count<T>(options?: IQueryOptions<T>): Promise<number> {
     throw new Error('Method not implemented.');
   }
   delete(id: ID): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
-  deleteMany(params: IQueryBuilder<ICharacter>): Promise<OperationResult> {
+  deleteMany(options: IQueryOptions<ICharacter>): Promise<OperationResult> {
     throw new Error('Method not implemented.');
   }
-  exists<T>(params: IQueryBuilder<T>): Promise<boolean> {
+  exists<T>(options: IQueryOptions<T>): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
-  find(id: ID): Promise<Persisted<ICharacter> | null> {
+  find<T>(id: ID, options?: IQueryOptions<T>): Promise<Persisted<ICharacter> | null> {
     throw new Error('Method not implemented.');
   }
   findAndDelete(id: ID): Promise<Persisted<ICharacter> | null> {
@@ -48,10 +48,10 @@ export class CharacterRepository implements ICharacterRepository {
   findAndUpdate(id: ID, data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter> | null> {
     throw new Error('Method not implemented.');
   }
-  get(id: ID): Promise<Persisted<ICharacter>> {
+  get<T>(id: ID, options?: IQueryOptions<T>): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
-  getMany(params?: IQueryBuilder<ICharacter>): Promise<Persisted<ICharacter>[]> {
+  getMany(options?: IQueryOptions<ICharacter>): Promise<Persisted<ICharacter>[]> {
     throw new Error('Method not implemented.');
   }
   save(data: SaveInput<ICharacter>): Promise<Persisted<ICharacter>> {
@@ -62,7 +62,7 @@ export class CharacterRepository implements ICharacterRepository {
   update(data: UpdateInput<ICharacter>): Promise<Persisted<ICharacter>> {
     throw new Error('Method not implemented.');
   }
-  updateMany(params: IQueryBuilder<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
+  updateMany(options: IQueryOptions<ICharacter>, data: UpdateInput<ICharacter>): Promise<OperationResult> {
     throw new Error('Method not implemented.');
   }
 }
